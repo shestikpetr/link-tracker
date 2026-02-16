@@ -3,8 +3,10 @@ package backend.academy.linktracker.bot.listener;
 import backend.academy.linktracker.bot.command.Command;
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.UpdatesListener;
+import com.pengrad.telegrambot.model.BotCommand;
 import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.SendMessage;
+import com.pengrad.telegrambot.request.SetMyCommands;
 import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Component;
 import java.util.List;
@@ -31,7 +33,10 @@ public class BotUpdateListener implements UpdatesListener {
                     .findFirst()
                     .ifPresentOrElse(command -> telegramBot.execute(command.handle(update)), () -> {
                         long chatId = update.message().chat().id();
-                        telegramBot.execute(new SendMessage(chatId, "Пупупу... Пусто..."));
+                        telegramBot.execute(new SendMessage(
+                                chatId,
+                                "Неизвестная команда. Воспользуйтесь /help, чтобы посмотреть список доступных"
+                                        + " команд."));
                     });
         });
 
@@ -41,5 +46,11 @@ public class BotUpdateListener implements UpdatesListener {
     @PostConstruct
     public void init() {
         telegramBot.setUpdatesListener(this);
+
+        BotCommand[] botCommands = commands.stream()
+                .map(command -> new BotCommand(command.command(), command.description()))
+                .toArray(BotCommand[]::new);
+
+        telegramBot.execute(new SetMyCommands(botCommands));
     }
 }

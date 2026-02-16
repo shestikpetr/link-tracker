@@ -21,7 +21,7 @@ public class HelpCommand implements Command {
 
     @Override
     public String description() {
-        return "Вывести все доступные команды пользователю";
+        return "Вывод списка доступных команд";
     }
 
     @Override

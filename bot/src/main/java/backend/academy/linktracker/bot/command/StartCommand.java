@@ -14,12 +14,12 @@ public class StartCommand implements Command {
 
     @Override
     public String description() {
-        return "Запуск Telegram-бота";
+        return "Запуск бота";
     }
 
     @Override
     public SendMessage handle(Update update) {
         long chatId = update.message().chat().id();
-        return new SendMessage(chatId, "Кчау!");
+        return new SendMessage(chatId, "Добро пожаловать! Используйте /help, чтобы посмотреть доступные команды.");
     }
 }
