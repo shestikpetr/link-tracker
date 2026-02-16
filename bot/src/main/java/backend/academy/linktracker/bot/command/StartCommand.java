@@ -2,21 +2,24 @@ package backend.academy.linktracker.bot.command;
 
 import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.SendMessage;
+import org.springframework.stereotype.Component;
 
-class StartCommand implements Command {
+@Component
+public class StartCommand implements Command {
 
     @Override
     public String command() {
-        return "";
+        return "/start";
     }
 
     @Override
     public String description() {
-        return "";
+        return "Запуск Telegram-бота";
     }
 
     @Override
     public SendMessage handle(Update update) {
-        return null;
+        long chatId = update.message().chat().id();
+        return new SendMessage(chatId, "Кчау!");
     }
 }
