@@ -4,6 +4,7 @@ import backend.academy.linktracker.bot.command.Command;
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.UpdatesListener;
 import com.pengrad.telegrambot.model.Update;
+import com.pengrad.telegrambot.request.SendMessage;
 import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Component;
 import java.util.List;
@@ -24,11 +25,16 @@ public class BotUpdateListener implements UpdatesListener {
             if (update.message() == null
                     || update.message().text() == null
                     || update.message().text().isEmpty()) return;
+
             commands.stream()
                     .filter(command -> command.command().equals(update.message().text()))
                     .findFirst()
-                    .ifPresent(command -> telegramBot.execute(command.handle(update)));
+                    .ifPresentOrElse(command -> telegramBot.execute(command.handle(update)), () -> {
+                        long chatId = update.message().chat().id();
+                        telegramBot.execute(new SendMessage(chatId, "Пупупу... Пусто..."));
+                    });
         });
+
         return UpdatesListener.CONFIRMED_UPDATES_ALL;
     }
 
