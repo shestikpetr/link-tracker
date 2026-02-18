@@ -8,9 +8,9 @@ import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.SendMessage;
 import com.pengrad.telegrambot.request.SetMyCommands;
 import jakarta.annotation.PostConstruct;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import java.util.List;
 
 @Slf4j
 @Component
@@ -41,7 +41,9 @@ public class BotUpdateListener implements UpdatesListener {
                                 telegramBot.execute(command.handle(update));
                             },
                             () -> {
-                                log.warn("Неизвестная команда: {}", update.message().text());
+                                log.warn(
+                                        "Неизвестная команда: {}",
+                                        update.message().text());
                                 long chatId = update.message().chat().id();
                                 telegramBot.execute(new SendMessage(
                                         chatId,

@@ -1,32 +1,22 @@
 package backend.academy.linktracker.bot.command;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import com.pengrad.telegrambot.model.Chat;
 import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.model.Update;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.context.ApplicationContext;
 
-import java.util.Map;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
-@ExtendWith(MockitoExtension.class)
 class HelpCommandTest {
-
-    @Mock
-    ApplicationContext context;
 
     HelpCommand command;
 
     @BeforeEach
     void setUp() {
-        command = new HelpCommand(context);
+        command = new HelpCommand();
     }
 
     @Test
@@ -41,9 +31,6 @@ class HelpCommandTest {
 
     @Test
     void handle_lists_all_commands() {
-        var startCommand = new StartCommand();
-        when(context.getBeansOfType(Command.class)).thenReturn(Map.of("startCommand", startCommand));
-
         var chat = mock(Chat.class);
         when(chat.id()).thenReturn(1L);
         var message = mock(Message.class);
@@ -53,15 +40,14 @@ class HelpCommandTest {
 
         var result = command.handle(update);
 
-        assertThat(result.getParameters().get("text").toString())
-                .contains("/start")
-                .contains(startCommand.description());
+        String text = result.getParameters().get("text").toString();
+        for (CommandInfo info : CommandInfo.values()) {
+            assertThat(text).contains(info.command()).contains(info.description());
+        }
     }
 
     @Test
     void handle_returns_send_message_to_correct_chat() {
-        when(context.getBeansOfType(Command.class)).thenReturn(Map.of());
-
         var chat = mock(Chat.class);
         when(chat.id()).thenReturn(99L);
         var message = mock(Message.class);
