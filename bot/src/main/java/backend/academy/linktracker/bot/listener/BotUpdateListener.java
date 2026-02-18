@@ -55,7 +55,7 @@ public class BotUpdateListener implements UpdatesListener {
                             });
         });
 
-        return UpdatesListener.CONFIRMED_UPDATES_ALL;
+        return CONFIRMED_UPDATES_ALL;
     }
 
     @PostConstruct
