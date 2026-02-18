@@ -26,7 +26,10 @@ public class BotUpdateListener implements UpdatesListener {
     @Override
     public int process(List<Update> list) {
         list.forEach(update -> {
-            log.info("{}: {}", update.message().chat().id(), update.message().text());
+            log.info(
+                    "Получено сообщение от chatId={}: {}",
+                    update.message().chat().id(),
+                    update.message().text());
 
             if (update.message() == null
                     || update.message().text() == null
