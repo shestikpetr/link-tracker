@@ -121,11 +121,11 @@ class TelegramBotIntegrationTest implements WithAssertions {
                         .withStatus(200)
                         .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                         .withBody("""
-                                {
-                                  "ok": true,
-                                  "result": []
-                                }
-                                """)));
+                            {
+                              "ok": true,
+                              "result": []
+                            }
+                            """)));
 
         List<Update> receivedUpdates = new CopyOnWriteArrayList<>();
         CountDownLatch latch = new CountDownLatch(1);

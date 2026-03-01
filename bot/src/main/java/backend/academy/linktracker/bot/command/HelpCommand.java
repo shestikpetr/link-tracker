@@ -2,23 +2,33 @@ package backend.academy.linktracker.bot.command;
 
 import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.SendMessage;
-import java.util.Arrays;
 import java.util.stream.Collectors;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 @Component
 @Order(1)
 public class HelpCommand implements Command {
+    private final CommandRegistry commandRegistry;
+
+    public HelpCommand(@Lazy CommandRegistry commandRegistry) {
+        this.commandRegistry = commandRegistry;
+    }
 
     @Override
-    public CommandInfo info() {
-        return CommandInfo.HELP;
+    public String command() {
+        return "/help";
+    }
+
+    @Override
+    public String description() {
+        return "Вывод списка доступных команд";
     }
 
     @Override
     public SendMessage handle(Update update) {
-        String text = Arrays.stream(CommandInfo.values())
+        String text = commandRegistry.getAll().stream()
                 .map(cmd -> cmd.command() + " - " + cmd.description())
                 .collect(Collectors.joining("\n"));
 

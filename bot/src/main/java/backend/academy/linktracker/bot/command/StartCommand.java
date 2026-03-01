@@ -10,8 +10,13 @@ import org.springframework.stereotype.Component;
 public class StartCommand implements Command {
 
     @Override
-    public CommandInfo info() {
-        return CommandInfo.START;
+    public String command() {
+        return "/start";
+    }
+
+    @Override
+    public String description() {
+        return "Запуск бота";
     }
 
     @Override

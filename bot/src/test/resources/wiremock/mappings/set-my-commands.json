@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "POST",
-    "urlPattern": "/bot[^/]+/setMyCommands"
+    "urlPattern": "/bot[^/]+/setmycommands"
   },
   "response": {
     "status": 200,

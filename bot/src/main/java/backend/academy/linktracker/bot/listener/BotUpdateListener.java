@@ -1,9 +1,8 @@
 package backend.academy.linktracker.bot.listener;
 
-import backend.academy.linktracker.bot.command.Command;
+import backend.academy.linktracker.bot.command.CommandRegistry;
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.UpdatesListener;
-import com.pengrad.telegrambot.model.BotCommand;
 import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.SendMessage;
 import com.pengrad.telegrambot.request.SetMyCommands;
@@ -16,37 +15,33 @@ import org.springframework.stereotype.Component;
 @Component
 public class BotUpdateListener implements UpdatesListener {
     private final TelegramBot telegramBot;
-    private final List<Command> commands;
+    private final CommandRegistry commandRegistry;
 
-    public BotUpdateListener(TelegramBot telegramBot, List<Command> commands) {
+    public BotUpdateListener(TelegramBot telegramBot, CommandRegistry commandRegistry) {
         this.telegramBot = telegramBot;
-        this.commands = commands;
+        this.commandRegistry = commandRegistry;
     }
 
     @Override
     public int process(List<Update> list) {
         list.forEach(update -> {
+            if (update.message() == null
+                    || update.message().text() == null
+                    || update.message().text().isEmpty()) return;
+
             log.info(
                     "Получено сообщение от chatId={}: {}",
                     update.message().chat().id(),
                     update.message().text());
 
-            if (update.message() == null
-                    || update.message().text() == null
-                    || update.message().text().isEmpty()) return;
-
-            commands.stream()
-                    .filter(command -> command.command().equals(update.message().text()))
-                    .findFirst()
+            commandRegistry
+                    .find(update.message().text())
                     .ifPresentOrElse(
                             command -> {
                                 log.debug("Выполнение команды: {}", command.command());
                                 telegramBot.execute(command.handle(update));
                             },
                             () -> {
-                                log.warn(
-                                        "Неизвестная команда: {}",
-                                        update.message().text());
                                 long chatId = update.message().chat().id();
                                 telegramBot.execute(new SendMessage(
                                         chatId,
@@ -62,10 +57,6 @@ public class BotUpdateListener implements UpdatesListener {
     public void init() {
         telegramBot.setUpdatesListener(this);
 
-        BotCommand[] botCommands = commands.stream()
-                .map(command -> new BotCommand(command.command(), command.description()))
-                .toArray(BotCommand[]::new);
-
-        telegramBot.execute(new SetMyCommands(botCommands));
+        telegramBot.execute(new SetMyCommands(commandRegistry.toBotCommands()));
     }
 }

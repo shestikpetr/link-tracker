@@ -4,15 +4,9 @@ import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.SendMessage;
 
 public interface Command {
-    CommandInfo info();
+    String command();
 
-    default String command() {
-        return info().command();
-    }
-
-    default String description() {
-        return info().description();
-    }
+    String description();
 
     SendMessage handle(Update update);
 }
