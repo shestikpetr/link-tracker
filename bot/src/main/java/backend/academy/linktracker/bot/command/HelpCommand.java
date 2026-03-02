@@ -12,6 +12,8 @@ import org.springframework.stereotype.Component;
 public class HelpCommand implements Command {
     private final CommandRegistry commandRegistry;
 
+    // Если мы будем использовать List<Command>, то команда Help не будет сама себя выводить из-за селф инджекта,
+    // приходится получать все команды слегка по другому
     public HelpCommand(@Lazy CommandRegistry commandRegistry) {
         this.commandRegistry = commandRegistry;
     }
