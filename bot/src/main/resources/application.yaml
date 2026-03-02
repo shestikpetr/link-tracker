@@ -5,7 +5,7 @@ spring:
   application:
     name: bot
   config:
-    import: file:bot/.env[.properties]
+    import: optional:file:bot/.env[.properties]
 
 app:
   telegram:
