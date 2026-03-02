@@ -1,5 +1,6 @@
 package backend.academy.linktracker.bot.listener;
 
+import backend.academy.linktracker.bot.client.BotClient;
 import backend.academy.linktracker.bot.command.Command;
 import backend.academy.linktracker.bot.command.CommandRegistry;
 import com.pengrad.telegrambot.model.Update;
@@ -35,8 +36,7 @@ public class MessageHandler {
     private void sendUnknownCommand(Update update) {
         long chatId = update.message().chat().id();
         botClient.execute(new SendMessage(
-                chatId,
-                "Неизвестная команда. Воспользуйтесь /help, чтобы посмотреть список доступных команд."));
+                chatId, "Неизвестная команда. Воспользуйтесь /help, чтобы посмотреть список доступных команд."));
     }
 
     public void handle(Update update) {

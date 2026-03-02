@@ -1,24 +1,16 @@
 package backend.academy.linktracker.bot.listener;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
 
-import backend.academy.linktracker.bot.command.StartCommand;
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.UpdatesListener;
-import com.pengrad.telegrambot.model.Chat;
-import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.model.Update;
-import com.pengrad.telegrambot.request.SendMessage;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -28,61 +20,25 @@ class BotUpdateListenerTest {
     @Mock
     TelegramBot telegramBot;
 
+    @Mock
+    MessageHandler messageHandler;
+
     BotUpdateListener listener;
 
     @BeforeEach
     void setUp() {
-        listener = new BotUpdateListener(telegramBot, List.of(new StartCommand()));
+        listener = new BotUpdateListener(telegramBot, messageHandler);
     }
 
     @Test
-    void process_known_command_executes_bot() {
-        var update = buildUpdate("/start");
+    void process_delegates_each_update_to_message_handler() {
+        var update1 = mock(Update.class);
+        var update2 = mock(Update.class);
 
-        listener.process(List.of(update));
+        listener.process(List.of(update1, update2));
 
-        verify(telegramBot).execute(any(SendMessage.class));
-    }
-
-    @Test
-    void process_unknown_command_sends_help_hint() {
-        var update = buildUpdate("/unknown");
-
-        listener.process(List.of(update));
-
-        var captor = ArgumentCaptor.forClass(SendMessage.class);
-        verify(telegramBot).execute(captor.capture());
-        assertThat(captor.getValue().getParameters().get("text").toString()).contains("/help");
-    }
-
-    @Test
-    void process_null_text_skips_update() {
-        var chat = mock(Chat.class);
-        when(chat.id()).thenReturn(1L);
-        var message = mock(Message.class);
-        when(message.chat()).thenReturn(chat);
-        when(message.text()).thenReturn(null);
-        var update = mock(Update.class);
-        when(update.message()).thenReturn(message);
-
-        listener.process(List.of(update));
-
-        verifyNoInteractions(telegramBot);
-    }
-
-    @Test
-    void process_empty_text_skips_update() {
-        var chat = mock(Chat.class);
-        when(chat.id()).thenReturn(1L);
-        var message = mock(Message.class);
-        when(message.chat()).thenReturn(chat);
-        when(message.text()).thenReturn("");
-        var update = mock(Update.class);
-        when(update.message()).thenReturn(message);
-
-        listener.process(List.of(update));
-
-        verifyNoInteractions(telegramBot);
+        verify(messageHandler).handle(update1);
+        verify(messageHandler).handle(update2);
     }
 
     @Test
@@ -92,14 +48,12 @@ class BotUpdateListenerTest {
         assertThat(result).isEqualTo(UpdatesListener.CONFIRMED_UPDATES_ALL);
     }
 
-    private Update buildUpdate(String text) {
-        var chat = mock(Chat.class);
-        when(chat.id()).thenReturn(100L);
-        var message = mock(Message.class);
-        when(message.chat()).thenReturn(chat);
-        when(message.text()).thenReturn(text);
+    @Test
+    void process_returns_confirmed_all() {
         var update = mock(Update.class);
-        when(update.message()).thenReturn(message);
-        return update;
+
+        int result = listener.process(List.of(update));
+
+        assertThat(result).isEqualTo(UpdatesListener.CONFIRMED_UPDATES_ALL);
     }
 }

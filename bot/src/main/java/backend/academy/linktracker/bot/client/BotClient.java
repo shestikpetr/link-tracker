@@ -1,4 +1,4 @@
-package backend.academy.linktracker.bot.listener;
+package backend.academy.linktracker.bot.client;
 
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.request.BaseRequest;
