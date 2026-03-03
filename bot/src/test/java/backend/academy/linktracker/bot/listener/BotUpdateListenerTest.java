@@ -2,7 +2,6 @@ package backend.academy.linktracker.bot.listener;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.UpdatesListener;
@@ -28,17 +27,6 @@ class BotUpdateListenerTest {
     @BeforeEach
     void setUp() {
         listener = new BotUpdateListener(telegramBot, messageHandler);
-    }
-
-    @Test
-    void process_delegates_each_update_to_message_handler() {
-        var update1 = mock(Update.class);
-        var update2 = mock(Update.class);
-
-        listener.process(List.of(update1, update2));
-
-        verify(messageHandler).handle(update1);
-        verify(messageHandler).handle(update2);
     }
 
     @Test

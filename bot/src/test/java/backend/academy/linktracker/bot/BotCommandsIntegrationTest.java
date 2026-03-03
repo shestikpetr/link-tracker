@@ -1,7 +1,6 @@
 package backend.academy.linktracker.bot;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
-import static com.github.tomakehurst.wiremock.client.WireMock.containing;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
@@ -21,6 +20,7 @@ import com.github.tomakehurst.wiremock.matching.RequestPatternBuilder;
 import com.pengrad.telegrambot.TelegramBot;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.stream.Collectors;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -54,45 +54,45 @@ class BotCommandsIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        telegramBot.removeGetUpdatesListener();
-        resetAllRequests();
         stubSendMessage();
+        telegramBot.setUpdatesListener(botUpdateListener);
     }
 
     @AfterEach
     void clearUpdatesListener() {
         telegramBot.removeGetUpdatesListener();
+        resetAllRequests();
     }
 
     @Test
     void start_command_sends_welcome_message() {
+        String text = "Добро пожаловать! Используйте /help, чтобы посмотреть доступные команды.";
         executeCommand("/start");
 
-        verify(sendMessageRequest().withRequestBody(containing("%2Fhelp")));
+        verify(sendMessageRequest().withRequestBody(equalTo(expectedBody(text))));
     }
 
     @Test
     void help_command_lists_all_commands() {
+        String expectedText = commandRegistry.getAll().stream()
+                .map(cmd -> cmd.command() + " - " + cmd.description())
+                .collect(Collectors.joining("\n"));
+
         executeCommand("/help");
 
-        var requestedFor = sendMessageRequest();
-        for (var command : commandRegistry.getAll()) {
-            requestedFor = requestedFor.withRequestBody(
-                    containing(URLEncoder.encode(command.command(), StandardCharsets.UTF_8)));
-        }
-        verify(requestedFor);
+        verify(sendMessageRequest().withRequestBody(equalTo(expectedBody(expectedText))));
     }
 
     @Test
     void unknown_command_sends_help_hint() {
+        String text = "Неизвестная команда. Воспользуйтесь /help, чтобы посмотреть список доступных команд.";
         executeCommand("/unknown");
 
-        verify(sendMessageRequest().withRequestBody(containing("%2Fhelp")));
+        verify(sendMessageRequest().withRequestBody(equalTo(expectedBody(text))));
     }
 
     private void executeCommand(String command) {
         stubGetUpdatesWithCommand(command);
-        telegramBot.setUpdatesListener(botUpdateListener);
         awaitSendMessage();
     }
 
@@ -142,6 +142,11 @@ class BotCommandsIntegrationTest {
     private void awaitSendMessage() {
         await().atMost(10, SECONDS)
                 .untilAsserted(() -> verify(1, postRequestedFor(urlMatching("/bot[^/]+/sendMessage"))));
+    }
+
+    private String expectedBody(String text) {
+        return "chat_id=" + CHAT_ID + "&text="
+                + URLEncoder.encode(text, StandardCharsets.UTF_8).replace("+", "%20");
     }
 
     private String buildUpdateBody(String command) {
