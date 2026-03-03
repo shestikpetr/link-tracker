@@ -2,6 +2,7 @@ package backend.academy.linktracker.scrapper.service;
 
 import backend.academy.linktracker.scrapper.dto.LinkResponse;
 import backend.academy.linktracker.scrapper.dto.ListLinksResponse;
+import backend.academy.linktracker.scrapper.model.TrackedLink;
 import backend.academy.linktracker.scrapper.repository.LinkRepository;
 import java.net.URI;
 import java.util.List;
@@ -35,7 +36,7 @@ public class LinkService {
         return linkRepository.removeLink(chatId, url);
     }
 
-    public Map<Long, List<LinkResponse>> findAllGroupedByChat() {
+    public Map<Long, List<TrackedLink>> findAllGroupedByChat() {
         return linkRepository.findAllGroupedByChat();
     }
 }
