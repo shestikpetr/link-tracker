@@ -8,10 +8,14 @@ import org.springframework.stereotype.Component;
 @Component
 @Order(3)
 public class TrackCommand implements Command {
+    @Override
+    public String command() {
+        return "/track";
+    }
 
     @Override
-    public CommandInfo info() {
-        return CommandInfo.TRACK;
+    public String description() {
+        return "Начать отслеживание ссылки";
     }
 
     @Override

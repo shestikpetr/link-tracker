@@ -10,8 +10,13 @@ import org.springframework.stereotype.Component;
 public class UntrackCommand implements Command {
 
     @Override
-    public CommandInfo info() {
-        return CommandInfo.UNTRACK;
+    public String command() {
+        return "/untrack";
+    }
+
+    @Override
+    public String description() {
+        return "Прекратить отслеживание ссылки";
     }
 
     @Override

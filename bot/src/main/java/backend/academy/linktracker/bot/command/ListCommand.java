@@ -8,10 +8,14 @@ import org.springframework.stereotype.Component;
 @Component
 @Order(2)
 public class ListCommand implements Command {
+    @Override
+    public String command() {
+        return "/list";
+    }
 
     @Override
-    public CommandInfo info() {
-        return CommandInfo.LIST;
+    public String description() {
+        return "Вывести список всех отслеживаемы ссылок";
     }
 
     @Override
