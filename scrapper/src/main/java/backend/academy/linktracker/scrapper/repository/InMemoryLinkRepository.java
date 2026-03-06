@@ -1,10 +1,10 @@
 package backend.academy.linktracker.scrapper.repository;
 
 import backend.academy.linktracker.scrapper.dto.LinkResponse;
-import backend.academy.linktracker.scrapper.exception.ChatAlreadyExistsException;
-import backend.academy.linktracker.scrapper.exception.ChatNotFoundException;
-import backend.academy.linktracker.scrapper.exception.LinkAlreadyExistsException;
-import backend.academy.linktracker.scrapper.exception.LinkNotFoundException;
+import backend.academy.linktracker.scrapper.exceptions.ChatAlreadyExistsException;
+import backend.academy.linktracker.scrapper.exceptions.ChatNotFoundException;
+import backend.academy.linktracker.scrapper.exceptions.LinkAlreadyExistsException;
+import backend.academy.linktracker.scrapper.exceptions.LinkNotFoundException;
 import backend.academy.linktracker.scrapper.model.TrackedLink;
 import java.net.URI;
 import java.time.Instant;

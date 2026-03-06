@@ -1,4 +1,4 @@
-package backend.academy.linktracker.scrapper.exception;
+package backend.academy.linktracker.scrapper.exceptions;
 
 import java.net.URI;
 

@@ -1,4 +1,4 @@
-package backend.academy.linktracker.scrapper.exception;
+package backend.academy.linktracker.scrapper.exceptions;
 
 public class ChatNotFoundException extends RuntimeException {
     public ChatNotFoundException(Long chatId) {
