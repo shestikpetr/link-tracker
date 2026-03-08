@@ -1,6 +1,7 @@
 package backend.academy.linktracker.bot.command;
 
-import static backend.academy.linktracker.bot.state.ChatState.*;
+import static backend.academy.linktracker.bot.state.ChatState.WAITING_TRACK_TAGS;
+import static backend.academy.linktracker.bot.state.ChatState.WAITING_TRACK_URL;
 
 import backend.academy.linktracker.bot.client.ScrapperClient;
 import backend.academy.linktracker.bot.dto.AddLinkRequest;
@@ -76,9 +77,7 @@ public class TrackCommand implements Command, StatefulCommand {
 
                 text = "Ссылка добавлена.";
             }
-            default -> {
-                throw new IllegalStateException("Произошла ошибка: " + state);
-            }
+            default -> throw new IllegalStateException("Произошла ошибка: " + state);
         }
 
         return new SendMessage(chatId, text);
