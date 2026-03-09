@@ -4,6 +4,7 @@ import static backend.academy.linktracker.bot.state.ChatState.WAITING_UNTRACK_UR
 
 import backend.academy.linktracker.bot.client.ScrapperClient;
 import backend.academy.linktracker.bot.dto.RemoveLinkRequest;
+import backend.academy.linktracker.bot.exceptions.LinkNotFoundException;
 import backend.academy.linktracker.bot.state.ChatState;
 import backend.academy.linktracker.bot.state.ChatStateService;
 import com.pengrad.telegrambot.model.Update;
@@ -11,9 +12,7 @@ import com.pengrad.telegrambot.request.SendMessage;
 import java.net.URI;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.HttpClientErrorException;
 
 @Component
 @RequiredArgsConstructor
@@ -41,12 +40,8 @@ public class UntrackStateHandler implements StatefulCommand {
                     chatId,
                     new RemoveLinkRequest(URI.create(update.message().text().trim())));
             text = "Ссылка удалена.";
-        } catch (HttpClientErrorException e) {
-            if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
-                text = "Ссылка не найдена.";
-            } else {
-                text = "Не удалось удалить ссылку.";
-            }
+        } catch (LinkNotFoundException e) {
+            text = e.getMessage();
         }
         chatStateService.clearState(chatId);
 

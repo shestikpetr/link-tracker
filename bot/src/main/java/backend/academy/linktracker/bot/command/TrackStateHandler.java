@@ -5,6 +5,8 @@ import static backend.academy.linktracker.bot.state.ChatState.WAITING_TRACK_URL;
 
 import backend.academy.linktracker.bot.client.ScrapperClient;
 import backend.academy.linktracker.bot.dto.AddLinkRequest;
+import backend.academy.linktracker.bot.exceptions.LinkAlreadyTrackedException;
+import backend.academy.linktracker.bot.exceptions.UnsupportedLinkException;
 import backend.academy.linktracker.bot.state.ChatState;
 import backend.academy.linktracker.bot.state.ChatStateService;
 import com.pengrad.telegrambot.model.Update;
@@ -14,9 +16,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.HttpClientErrorException;
 
 @Component
 @RequiredArgsConstructor
@@ -37,8 +37,12 @@ public class TrackStateHandler implements StatefulCommand {
 
         switch (state) {
             case WAITING_TRACK_URL -> {
-                chatStateService.setPendingUrl(
-                        chatId, URI.create(update.message().text().trim()));
+                try {
+                    chatStateService.setPendingUrl(
+                            chatId, URI.create(update.message().text().trim()));
+                } catch (IllegalArgumentException e) {
+                    return new SendMessage(chatId, "Некорректная ссылка. Введите ссылку ещё раз:");
+                }
                 chatStateService.setState(chatId, WAITING_TRACK_TAGS);
                 text = "Введите теги:";
             }
@@ -51,12 +55,8 @@ public class TrackStateHandler implements StatefulCommand {
                 try {
                     scrapperClient.addLink(chatId, new AddLinkRequest(url, tags, List.of()));
                     text = "Ссылка добавлена.";
-                } catch (HttpClientErrorException e) {
-                    if (e.getStatusCode() == HttpStatus.CONFLICT) {
-                        text = "Ссылка уже отслеживается.";
-                    } else {
-                        text = "Не удалось добавить ссылку.";
-                    }
+                } catch (LinkAlreadyTrackedException | UnsupportedLinkException e) {
+                    text = e.getMessage();
                 }
                 chatStateService.clearState(chatId);
             }

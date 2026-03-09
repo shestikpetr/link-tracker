@@ -1,6 +1,7 @@
 package backend.academy.linktracker.scrapper.service;
 
 import backend.academy.linktracker.scrapper.dto.LinkResponse;
+import backend.academy.linktracker.scrapper.exceptions.UnsupportedLinkException;
 import backend.academy.linktracker.scrapper.model.TrackedLink;
 import backend.academy.linktracker.scrapper.repository.LinkRepository;
 import java.net.URI;
@@ -12,12 +13,14 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class LinkService {
     private final LinkRepository linkRepository;
+    private final LinkChecker linkChecker;
 
     public List<LinkResponse> getLinks(Long chatId) {
         return linkRepository.findByChat(chatId).stream().map(this::toResponse).toList();
     }
 
     public LinkResponse addLink(Long chatId, URI url, List<String> tags, List<String> filters) {
+        if (!linkChecker.supports(url)) throw new UnsupportedLinkException(url);
         return toResponse(linkRepository.addLink(chatId, url, tags, filters));
     }
 
