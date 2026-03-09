@@ -1,6 +1,5 @@
 package backend.academy.linktracker.scrapper.repository;
 
-import backend.academy.linktracker.scrapper.dto.LinkResponse;
 import backend.academy.linktracker.scrapper.model.TrackedLink;
 import java.net.URI;
 import java.util.List;
@@ -11,11 +10,11 @@ public interface LinkRepository {
 
     void deleteChat(Long chatId);
 
-    LinkResponse addLink(Long chatId, URI url, List<String> tags, List<String> filters);
+    TrackedLink addLink(Long chatId, URI url, List<String> tags, List<String> filters);
 
-    LinkResponse removeLink(Long chatId, URI url);
+    TrackedLink removeLink(Long chatId, URI url);
 
-    List<LinkResponse> findByChat(Long chatId);
+    List<TrackedLink> findByChat(Long chatId);
 
     Map<Long, List<TrackedLink>> findAllGroupedByChat();
 }

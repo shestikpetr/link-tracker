@@ -1,12 +1,10 @@
 package backend.academy.linktracker.scrapper.service;
 
 import backend.academy.linktracker.scrapper.dto.LinkResponse;
-import backend.academy.linktracker.scrapper.dto.ListLinksResponse;
 import backend.academy.linktracker.scrapper.model.TrackedLink;
 import backend.academy.linktracker.scrapper.repository.LinkRepository;
 import java.net.URI;
 import java.util.List;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -15,28 +13,19 @@ import org.springframework.stereotype.Service;
 public class LinkService {
     private final LinkRepository linkRepository;
 
-    public void registerChat(Long chatId) {
-        linkRepository.registerChat(chatId);
-    }
-
-    public void deleteChat(Long chatId) {
-        linkRepository.deleteChat(chatId);
-    }
-
-    public ListLinksResponse getLinks(Long chatId) {
-        List<LinkResponse> links = linkRepository.findByChat(chatId);
-        return new ListLinksResponse(links, links.size());
+    public List<LinkResponse> getLinks(Long chatId) {
+        return linkRepository.findByChat(chatId).stream().map(this::toResponse).toList();
     }
 
     public LinkResponse addLink(Long chatId, URI url, List<String> tags, List<String> filters) {
-        return linkRepository.addLink(chatId, url, tags, filters);
+        return toResponse(linkRepository.addLink(chatId, url, tags, filters));
     }
 
     public LinkResponse removeLink(Long chatId, URI url) {
-        return linkRepository.removeLink(chatId, url);
+        return toResponse(linkRepository.removeLink(chatId, url));
     }
 
-    public Map<Long, List<TrackedLink>> findAllGroupedByChat() {
-        return linkRepository.findAllGroupedByChat();
+    private LinkResponse toResponse(TrackedLink link) {
+        return new LinkResponse(link.id(), link.url(), link.tags(), link.filters());
     }
 }

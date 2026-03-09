@@ -1,6 +1,5 @@
 package backend.academy.linktracker.scrapper.repository;
 
-import backend.academy.linktracker.scrapper.dto.LinkResponse;
 import backend.academy.linktracker.scrapper.exceptions.ChatAlreadyExistsException;
 import backend.academy.linktracker.scrapper.exceptions.ChatNotFoundException;
 import backend.academy.linktracker.scrapper.exceptions.LinkAlreadyExistsException;
@@ -32,7 +31,7 @@ public class InMemoryLinkRepository implements LinkRepository {
     }
 
     @Override
-    public LinkResponse addLink(Long chatId, URI url, List<String> tags, List<String> filters) {
+    public TrackedLink addLink(Long chatId, URI url, List<String> tags, List<String> filters) {
         Map<Long, TrackedLink> links = getChat(chatId);
         boolean exists = links.values().stream().anyMatch(l -> l.url().equals(url));
         if (exists) throw new LinkAlreadyExistsException(url);
@@ -40,27 +39,25 @@ public class InMemoryLinkRepository implements LinkRepository {
         long id = idGen.getAndIncrement();
         TrackedLink link = new TrackedLink(id, url, tags, filters, Instant.now());
         links.put(id, link);
-        return trackedLinkToLinkResponse(link);
+        return link;
     }
 
     @Override
-    public LinkResponse removeLink(Long chatId, URI url) {
+    public TrackedLink removeLink(Long chatId, URI url) {
         Map<Long, TrackedLink> links = getChat(chatId);
         return links.values().stream()
                 .filter(l -> l.url().equals(url))
                 .findFirst()
                 .map(l -> {
                     links.remove(l.id());
-                    return trackedLinkToLinkResponse(l);
+                    return l;
                 })
                 .orElseThrow(() -> new LinkNotFoundException(url));
     }
 
     @Override
-    public List<LinkResponse> findByChat(Long chatId) {
-        return getChat(chatId).values().stream()
-                .map(this::trackedLinkToLinkResponse)
-                .toList();
+    public List<TrackedLink> findByChat(Long chatId) {
+        return List.copyOf(getChat(chatId).values());
     }
 
     @Override
@@ -74,9 +71,5 @@ public class InMemoryLinkRepository implements LinkRepository {
         Map<Long, TrackedLink> links = storage.get(chatId);
         if (links == null) throw new ChatNotFoundException(chatId);
         return links;
-    }
-
-    private LinkResponse trackedLinkToLinkResponse(TrackedLink trackedLink) {
-        return new LinkResponse(trackedLink.id(), trackedLink.url(), trackedLink.tags(), trackedLink.filters());
     }
 }
