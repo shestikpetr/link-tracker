@@ -14,7 +14,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
 
 @Component
 @RequiredArgsConstructor
@@ -46,9 +48,17 @@ public class TrackStateHandler implements StatefulCommand {
                         .map(String::trim)
                         .filter(t -> !t.isEmpty())
                         .toList();
-                scrapperClient.addLink(chatId, new AddLinkRequest(url, tags, List.of()));
+                try {
+                    scrapperClient.addLink(chatId, new AddLinkRequest(url, tags, List.of()));
+                    text = "Ссылка добавлена.";
+                } catch (HttpClientErrorException e) {
+                    if (e.getStatusCode() == HttpStatus.CONFLICT) {
+                        text = "Ссылка уже отслеживается.";
+                    } else {
+                        text = "Не удалось добавить ссылку.";
+                    }
+                }
                 chatStateService.clearState(chatId);
-                text = "Ссылка добавлена.";
             }
             default -> throw new IllegalStateException("Произошла ошибка: " + state);
         }

@@ -11,7 +11,9 @@ import com.pengrad.telegrambot.request.SendMessage;
 import java.net.URI;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
 
 @Component
 @RequiredArgsConstructor
@@ -33,10 +35,21 @@ public class UntrackStateHandler implements StatefulCommand {
             throw new IllegalStateException("Произошла ошибка: " + state);
         }
 
-        scrapperClient.removeLink(
-                chatId, new RemoveLinkRequest(URI.create(update.message().text().trim())));
+        String text;
+        try {
+            scrapperClient.removeLink(
+                    chatId,
+                    new RemoveLinkRequest(URI.create(update.message().text().trim())));
+            text = "Ссылка удалена.";
+        } catch (HttpClientErrorException e) {
+            if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
+                text = "Ссылка не найдена.";
+            } else {
+                text = "Не удалось удалить ссылку.";
+            }
+        }
         chatStateService.clearState(chatId);
 
-        return new SendMessage(chatId, "Ссылка удалена.");
+        return new SendMessage(chatId, text);
     }
 }
