@@ -15,8 +15,11 @@ public class LinkService {
     private final LinkRepository linkRepository;
     private final LinkChecker linkChecker;
 
-    public List<LinkResponse> getLinks(Long chatId) {
-        return linkRepository.findByChat(chatId).stream().map(this::toResponse).toList();
+    public List<LinkResponse> getLinks(Long chatId, String tag) {
+        return linkRepository.findByChat(chatId).stream()
+                .filter(link -> tag == null || link.tags().contains(tag))
+                .map(this::toResponse)
+                .toList();
     }
 
     public LinkResponse addLink(Long chatId, URI url, List<String> tags, List<String> filters) {

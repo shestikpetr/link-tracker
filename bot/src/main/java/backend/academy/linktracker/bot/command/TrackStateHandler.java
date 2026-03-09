@@ -9,10 +9,10 @@ import backend.academy.linktracker.bot.exceptions.LinkAlreadyTrackedException;
 import backend.academy.linktracker.bot.exceptions.UnsupportedLinkException;
 import backend.academy.linktracker.bot.state.ChatState;
 import backend.academy.linktracker.bot.state.ChatStateService;
+import backend.academy.linktracker.bot.utils.TagParser;
 import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.SendMessage;
 import java.net.URI;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +23,7 @@ import org.springframework.stereotype.Component;
 public class TrackStateHandler implements StatefulCommand {
     private final ScrapperClient scrapperClient;
     private final ChatStateService chatStateService;
+    private final TagParser tagParser;
 
     @Override
     public Set<ChatState> handledStates() {
@@ -48,10 +49,7 @@ public class TrackStateHandler implements StatefulCommand {
             }
             case WAITING_TRACK_TAGS -> {
                 URI url = chatStateService.getPendingUrl(chatId);
-                List<String> tags = Arrays.stream(update.message().text().split(","))
-                        .map(String::trim)
-                        .filter(t -> !t.isEmpty())
-                        .toList();
+                List<String> tags = tagParser.parseTags(update.message().text());
                 try {
                     scrapperClient.addLink(chatId, new AddLinkRequest(url, tags, List.of()));
                     text = "Ссылка добавлена.";

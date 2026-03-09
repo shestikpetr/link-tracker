@@ -1,6 +1,7 @@
 package backend.academy.linktracker.bot.command;
 
 import backend.academy.linktracker.bot.client.ScrapperClient;
+import backend.academy.linktracker.bot.utils.TagParser;
 import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.SendMessage;
 import java.util.stream.Collectors;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ListCommand implements Command {
     private final ScrapperClient scrapperClient;
+    private final TagParser tagParser;
 
     @Override
     public String command() {
@@ -27,8 +29,10 @@ public class ListCommand implements Command {
     @Override
     public SendMessage handle(Update update) {
         long chatId = update.message().chat().id();
+        String[] parts = update.message().text().trim().split("\\s+", 2);
+        String tag = parts.length > 1 ? tagParser.normalize(parts[1]) : null;
 
-        var links = scrapperClient.getLinks(chatId);
+        var links = scrapperClient.getLinks(chatId, tag);
         String text;
 
         if (!links.isEmpty()) {
