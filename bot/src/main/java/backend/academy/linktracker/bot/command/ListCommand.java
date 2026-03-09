@@ -28,7 +28,7 @@ public class ListCommand implements Command {
     public SendMessage handle(Update update) {
         long chatId = update.message().chat().id();
 
-        var links = scrapperClient.getLinks(chatId).links();
+        var links = scrapperClient.getLinks(chatId);
         String text;
 
         if (!links.isEmpty()) {

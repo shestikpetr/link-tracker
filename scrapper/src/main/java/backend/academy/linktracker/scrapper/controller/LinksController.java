@@ -2,9 +2,9 @@ package backend.academy.linktracker.scrapper.controller;
 
 import backend.academy.linktracker.scrapper.dto.AddLinkRequest;
 import backend.academy.linktracker.scrapper.dto.LinkResponse;
-import backend.academy.linktracker.scrapper.dto.ListLinksResponse;
 import backend.academy.linktracker.scrapper.dto.RemoveLinkRequest;
 import backend.academy.linktracker.scrapper.service.LinkService;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,7 +21,7 @@ public class LinksController {
     private final LinkService linkService;
 
     @GetMapping
-    public ListLinksResponse getLinks(@RequestHeader("Tg-Chat-Id") Long chatId) {
+    public List<LinkResponse> getLinks(@RequestHeader("Tg-Chat-Id") Long chatId) {
         return linkService.getLinks(chatId);
     }
 
