@@ -17,14 +17,17 @@ public class CommandDispatcher {
 
     public void dispatch(String commandName, Update update) {
         long chatId = update.message().chat().id();
+        SendMessage response;
         try {
-            commandRegistry
-                    .find(commandName)
-                    .ifPresentOrElse(cmd -> botClient.execute(cmd.handle(update)), () -> sendUnknownCommand(update));
+            response = commandRegistry.find(commandName)
+                    .map(cmd -> cmd.handle(update))
+                    .orElseGet(() -> new SendMessage(chatId,
+                            "Неизвестная команда. Воспользуйтесь /help, чтобы посмотреть список доступных команд."));
         } catch (Exception e) {
             log.error("Ошибка при выполнении команды '{}' для chatId={}", commandName, chatId, e);
-            botClient.execute(new SendMessage(chatId, "Произошла внутренняя ошибка."));
+            response = new SendMessage(chatId, "Произошла внутренняя ошибка.");
         }
+        botClient.execute(response);
     }
 
     public void sendUnknownCommand(Update update) {

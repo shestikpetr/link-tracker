@@ -31,12 +31,14 @@ public class StateInputDispatcher {
         StatefulCommand cmd = stateHandlers.get(state);
         if (cmd != null) {
             long chatId = update.message().chat().id();
+            SendMessage response;
             try {
-                botClient.execute(cmd.handleInput(update));
+                response = cmd.handleInput(update);
             } catch (Exception e) {
                 log.error("Ошибка при обработке состояния {} для chatId={}", state, chatId, e);
-                botClient.execute(new SendMessage(chatId, "Произошла внутренняя ошибка."));
+                response = new SendMessage(chatId, "Произошла внутренняя ошибка.");
             }
+            botClient.execute(response);
         }
     }
 }
