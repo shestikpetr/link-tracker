@@ -67,6 +67,15 @@ public class InMemoryLinkRepository implements LinkRepository {
                         Map.Entry::getKey, e -> List.copyOf(e.getValue().values())));
     }
 
+    @Override
+    public void updateLastChecked(Long linkId, Instant lastCheckedAt) {
+        storage.values()
+                .forEach(links -> links.computeIfPresent(
+                        linkId,
+                        (_, link) ->
+                                new TrackedLink(link.id(), link.url(), link.tags(), link.filters(), lastCheckedAt)));
+    }
+
     private Map<Long, TrackedLink> getChat(Long chatId) {
         Map<Long, TrackedLink> links = storage.get(chatId);
         if (links == null) throw new ChatNotFoundException(chatId);

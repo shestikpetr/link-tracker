@@ -17,7 +17,10 @@ public class LinkUpdateService {
             Long chatId = entry.getKey();
 
             for (TrackedLink link : entry.getValue()) {
-                linkChecker.checkLink(link).ifPresent(_ -> linkNotifier.notify(link, chatId));
+                linkChecker.checkLink(link).ifPresent(lastActivity -> {
+                    linkNotifier.notify(link, chatId);
+                    linkRepository.updateLastChecked(link.id(), lastActivity);
+                });
             }
         }
     }
