@@ -73,6 +73,28 @@ class TrackStateHandlerTest {
     }
 
     @Test
+    void waiting_url_relative_uri_returns_error_without_state_change() {
+        when(chatStateService.getState(CHAT_ID)).thenReturn(Optional.of(WAITING_TRACK_URL));
+
+        SendMessage response = handler.handleInput(buildUpdate("вов"));
+
+        assertThat(text(response)).contains("Некорректная");
+        verify(chatStateService, never()).setPendingUrl(anyLong(), any());
+        verify(chatStateService, never()).setState(anyLong(), any());
+    }
+
+    @Test
+    void waiting_url_non_http_scheme_returns_error_without_state_change() {
+        when(chatStateService.getState(CHAT_ID)).thenReturn(Optional.of(WAITING_TRACK_URL));
+
+        SendMessage response = handler.handleInput(buildUpdate("ftp://example.com/file"));
+
+        assertThat(text(response)).contains("Некорректная");
+        verify(chatStateService, never()).setPendingUrl(anyLong(), any());
+        verify(chatStateService, never()).setState(anyLong(), any());
+    }
+
+    @Test
     void waiting_tags_adds_link_and_clears_state() {
         URI url = URI.create("https://github.com/foo/bar");
         when(chatStateService.getState(CHAT_ID)).thenReturn(Optional.of(WAITING_TRACK_TAGS));

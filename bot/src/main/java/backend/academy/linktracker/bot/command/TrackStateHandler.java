@@ -40,8 +40,13 @@ public class TrackStateHandler implements StatefulCommand {
         switch (state) {
             case WAITING_TRACK_URL -> {
                 try {
-                    chatStateService.setPendingUrl(
-                            chatId, URI.create(update.message().text().trim()));
+                    URI uri = URI.create(update.message().text().trim());
+                    if (!uri.isAbsolute()
+                            || !(uri.getScheme().equals("http")
+                                    || uri.getScheme().equals("https"))) {
+                        return new SendMessage(chatId, "Некорректная ссылка. Введите ссылку ещё раз:");
+                    }
+                    chatStateService.setPendingUrl(chatId, uri);
                 } catch (IllegalArgumentException e) {
                     return new SendMessage(chatId, "Некорректная ссылка. Введите ссылку ещё раз:");
                 }
