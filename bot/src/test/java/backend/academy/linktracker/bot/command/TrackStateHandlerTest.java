@@ -8,12 +8,14 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import backend.academy.linktracker.bot.client.ScrapperClient;
 import backend.academy.linktracker.bot.dto.AddLinkRequest;
 import backend.academy.linktracker.bot.exceptions.LinkAlreadyTrackedException;
+import backend.academy.linktracker.bot.exceptions.LinkNotFoundException;
 import backend.academy.linktracker.bot.exceptions.UnsupportedLinkException;
 import backend.academy.linktracker.bot.state.ChatStateService;
 import backend.academy.linktracker.bot.utils.TagParser;
@@ -93,6 +95,21 @@ class TrackStateHandlerTest {
         SendMessage response = handler.handleInput(buildUpdate("тег1"));
 
         assertThat(text(response)).isEqualTo("Ссылка уже отслеживается.");
+        verify(chatStateService).clearState(CHAT_ID);
+    }
+
+    @Test
+    void waiting_tags_chat_not_registered_auto_registers_and_adds_link() {
+        URI url = URI.create("https://github.com/foo/bar");
+        when(chatStateService.getState(CHAT_ID)).thenReturn(Optional.of(WAITING_TRACK_TAGS));
+        when(chatStateService.getPendingUrl(CHAT_ID)).thenReturn(url);
+        doThrow(new LinkNotFoundException()).doNothing().when(scrapperClient).addLink(anyLong(), any());
+
+        SendMessage response = handler.handleInput(buildUpdate("тег1"));
+
+        assertThat(text(response)).isEqualTo("Ссылка добавлена.");
+        verify(scrapperClient).registerChat(CHAT_ID);
+        verify(scrapperClient, times(2)).addLink(CHAT_ID, new AddLinkRequest(url, List.of("тег1"), List.of()));
         verify(chatStateService).clearState(CHAT_ID);
     }
 

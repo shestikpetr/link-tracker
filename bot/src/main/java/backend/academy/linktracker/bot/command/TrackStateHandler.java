@@ -6,6 +6,7 @@ import static backend.academy.linktracker.bot.state.ChatState.WAITING_TRACK_URL;
 import backend.academy.linktracker.bot.client.ScrapperClient;
 import backend.academy.linktracker.bot.dto.AddLinkRequest;
 import backend.academy.linktracker.bot.exceptions.LinkAlreadyTrackedException;
+import backend.academy.linktracker.bot.exceptions.LinkNotFoundException;
 import backend.academy.linktracker.bot.exceptions.UnsupportedLinkException;
 import backend.academy.linktracker.bot.state.ChatState;
 import backend.academy.linktracker.bot.state.ChatStateService;
@@ -55,6 +56,10 @@ public class TrackStateHandler implements StatefulCommand {
                     text = "Ссылка добавлена.";
                 } catch (LinkAlreadyTrackedException | UnsupportedLinkException e) {
                     text = e.getMessage();
+                } catch (LinkNotFoundException e) {
+                    scrapperClient.registerChat(chatId);
+                    scrapperClient.addLink(chatId, new AddLinkRequest(url, tags, List.of()));
+                    text = "Ссылка добавлена.";
                 }
                 chatStateService.clearState(chatId);
             }

@@ -1,9 +1,12 @@
 package backend.academy.linktracker.bot.command;
 
 import backend.academy.linktracker.bot.client.ScrapperClient;
+import backend.academy.linktracker.bot.dto.LinkResponse;
+import backend.academy.linktracker.bot.exceptions.LinkNotFoundException;
 import backend.academy.linktracker.bot.utils.TagParser;
 import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.SendMessage;
+import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.annotation.Order;
@@ -32,15 +35,18 @@ public class ListCommand implements Command {
         String[] parts = update.message().text().trim().split("\\s+", 2);
         String tag = parts.length > 1 ? tagParser.normalize(parts[1]) : null;
 
-        var links = scrapperClient.getLinks(chatId, tag);
-        String text;
-
-        if (!links.isEmpty()) {
-            text = links.stream().map(link -> link.url().toString()).collect(Collectors.joining("\n"));
-        } else {
-            text = "Нет отслеживаемых ссылок.";
+        try {
+            return buildResponse(chatId, scrapperClient.getLinks(chatId, tag));
+        } catch (LinkNotFoundException e) {
+            scrapperClient.registerChat(chatId);
+            return buildResponse(chatId, scrapperClient.getLinks(chatId, tag));
         }
+    }
 
+    private SendMessage buildResponse(long chatId, List<LinkResponse> links) {
+        String text = links.isEmpty()
+                ? "Нет отслеживаемых ссылок."
+                : links.stream().map(link -> link.url().toString()).collect(Collectors.joining("\n"));
         return new SendMessage(chatId, text);
     }
 }

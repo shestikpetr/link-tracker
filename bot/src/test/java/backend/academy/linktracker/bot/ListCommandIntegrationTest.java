@@ -10,6 +10,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.resetAllRequests;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlMatching;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching;
 import static com.github.tomakehurst.wiremock.client.WireMock.verify;
 import static com.github.tomakehurst.wiremock.stubbing.Scenario.STARTED;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -122,6 +123,39 @@ class ListCommandIntegrationTest {
                 1,
                 postRequestedFor(urlMatching("/bot[^/]+/sendMessage"))
                         .withRequestBody(equalTo(expectedBody("https://github.com/foo/bar"))));
+    }
+
+    @Test
+    void list_auto_registers_chat_on_404_and_shows_result() {
+        stubGetUpdates("list-auto-reg", "/list");
+        stubFor(get(urlPathEqualTo("/links"))
+                .inScenario("links-auto-reg")
+                .whenScenarioStateIs(STARTED)
+                .willReturn(
+                        aResponse()
+                                .withStatus(404)
+                                .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                                .withBody(
+                                        "{\"description\":\"Not found\",\"code\":\"404\",\"exceptionName\":\"\",\"exceptionMessage\":\"\",\"stacktrace\":[]}"))
+                .willSetStateTo("registered"));
+        stubFor(post(urlPathMatching("/tg-chat/\\d+")).willReturn(aResponse().withStatus(200)));
+        stubFor(get(urlPathEqualTo("/links"))
+                .inScenario("links-auto-reg")
+                .whenScenarioStateIs("registered")
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                        .withBody("[]")));
+
+        telegramBot.setUpdatesListener(botUpdateListener);
+        awaitSendMessages();
+
+        verify(1, postRequestedFor(urlPathMatching("/tg-chat/\\d+")));
+        verify(2, getRequestedFor(urlPathEqualTo("/links")));
+        verify(
+                1,
+                postRequestedFor(urlMatching("/bot[^/]+/sendMessage"))
+                        .withRequestBody(equalTo(expectedBody("Нет отслеживаемых ссылок."))));
     }
 
     private void stubGetUpdates(String scenario, String message) {
