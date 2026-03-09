@@ -19,9 +19,11 @@ public class CommandDispatcher {
         long chatId = update.message().chat().id();
         SendMessage response;
         try {
-            response = commandRegistry.find(commandName)
+            response = commandRegistry
+                    .find(commandName)
                     .map(cmd -> cmd.handle(update))
-                    .orElseGet(() -> new SendMessage(chatId,
+                    .orElseGet(() -> new SendMessage(
+                            chatId,
                             "Неизвестная команда. Воспользуйтесь /help, чтобы посмотреть список доступных команд."));
         } catch (Exception e) {
             log.error("Ошибка при выполнении команды '{}' для chatId={}", commandName, chatId, e);
