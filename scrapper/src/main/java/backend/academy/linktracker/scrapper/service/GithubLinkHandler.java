@@ -3,15 +3,13 @@ package backend.academy.linktracker.scrapper.service;
 import backend.academy.linktracker.scrapper.client.GithubClient;
 import java.net.URI;
 import java.time.Instant;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 public class GithubLinkHandler implements LinkHandler {
     private final GithubClient githubClient;
-
-    public GithubLinkHandler(GithubClient githubClient) {
-        this.githubClient = githubClient;
-    }
 
     @Override
     public boolean supports(URI url) {

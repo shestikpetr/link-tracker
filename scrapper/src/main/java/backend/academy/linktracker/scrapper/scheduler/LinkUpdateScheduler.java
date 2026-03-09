@@ -6,20 +6,16 @@ import backend.academy.linktracker.scrapper.model.TrackedLink;
 import backend.academy.linktracker.scrapper.repository.LinkRepository;
 import backend.academy.linktracker.scrapper.service.LinkChecker;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 public class LinkUpdateScheduler {
     private final LinkRepository linkRepository;
     private final LinkChecker linkChecker;
     private final BotClient botClient;
-
-    public LinkUpdateScheduler(LinkRepository linkRepository, LinkChecker linkChecker, BotClient botClient) {
-        this.linkRepository = linkRepository;
-        this.linkChecker = linkChecker;
-        this.botClient = botClient;
-    }
 
     @Scheduled(fixedDelayString = "${app.scheduler.interval}")
     public void checkUpdates() {

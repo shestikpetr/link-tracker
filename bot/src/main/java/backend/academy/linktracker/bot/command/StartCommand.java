@@ -3,6 +3,7 @@ package backend.academy.linktracker.bot.command;
 import backend.academy.linktracker.bot.client.ScrapperClient;
 import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.SendMessage;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
@@ -10,12 +11,9 @@ import org.springframework.stereotype.Component;
 @Component
 @Order(0)
 @Slf4j
+@RequiredArgsConstructor
 public class StartCommand implements Command {
     private final ScrapperClient scrapperClient;
-
-    public StartCommand(ScrapperClient scrapperClient) {
-        this.scrapperClient = scrapperClient;
-    }
 
     @Override
     public String command() {

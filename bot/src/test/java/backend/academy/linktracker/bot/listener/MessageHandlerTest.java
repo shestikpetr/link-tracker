@@ -4,8 +4,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import backend.academy.linktracker.bot.client.BotClient;
-import backend.academy.linktracker.bot.command.CommandRegistry;
+import backend.academy.linktracker.bot.state.ChatStateService;
 import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.model.Update;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,25 +16,27 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class MessageHandlerTest {
+    @Mock
+    CommandDispatcher commandDispatcher;
 
     @Mock
-    BotClient botClient;
+    StateInputDispatcher stateInputDispatcher;
 
     @Mock
-    CommandRegistry commandRegistry;
+    ChatStateService chatStateService;
 
     MessageHandler handler;
 
     @BeforeEach
     void setUp() {
-        handler = new MessageHandler(commandRegistry, botClient);
+        handler = new MessageHandler(commandDispatcher, stateInputDispatcher, chatStateService);
     }
 
     @ParameterizedTest
     @NullAndEmptySource
     void handle_blank_text_skips_update(String text) {
         handler.handle(buildUpdate(text));
-        verifyNoInteractions(botClient);
+        verifyNoInteractions(commandDispatcher, stateInputDispatcher);
     }
 
     private Update buildUpdate(String text) {

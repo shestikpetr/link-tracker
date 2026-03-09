@@ -4,17 +4,15 @@ import backend.academy.linktracker.bot.client.ScrapperClient;
 import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.SendMessage;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 @Component
 @Order(2)
+@RequiredArgsConstructor
 public class ListCommand implements Command {
     private final ScrapperClient scrapperClient;
-
-    public ListCommand(ScrapperClient scrapperClient) {
-        this.scrapperClient = scrapperClient;
-    }
 
     @Override
     public String command() {
