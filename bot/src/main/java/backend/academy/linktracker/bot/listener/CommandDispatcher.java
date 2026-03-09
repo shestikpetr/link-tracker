@@ -12,6 +12,9 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class CommandDispatcher {
+    private static final String UNKNOWN_COMMAND_TEXT =
+            "Неизвестная команда. Воспользуйтесь /help, чтобы посмотреть список доступных команд.";
+
     private final CommandRegistry commandRegistry;
     private final BotClient botClient;
 
@@ -22,9 +25,7 @@ public class CommandDispatcher {
             response = commandRegistry
                     .find(commandName)
                     .map(cmd -> cmd.handle(update))
-                    .orElseGet(() -> new SendMessage(
-                            chatId,
-                            "Неизвестная команда. Воспользуйтесь /help, чтобы посмотреть список доступных команд."));
+                    .orElseGet(() -> new SendMessage(chatId, UNKNOWN_COMMAND_TEXT));
         } catch (Exception e) {
             log.error("Ошибка при выполнении команды '{}' для chatId={}", commandName, chatId, e);
             response = new SendMessage(chatId, "Произошла внутренняя ошибка.");
@@ -34,7 +35,6 @@ public class CommandDispatcher {
 
     public void sendUnknownCommand(Update update) {
         long chatId = update.message().chat().id();
-        botClient.execute(new SendMessage(
-                chatId, "Неизвестная команда. Воспользуйтесь /help, чтобы посмотреть список доступных команд."));
+        botClient.execute(new SendMessage(chatId, UNKNOWN_COMMAND_TEXT));
     }
 }

@@ -1,19 +1,17 @@
 package backend.academy.linktracker.bot.command;
 
-import backend.academy.linktracker.bot.client.ScrapperClient;
+import backend.academy.linktracker.bot.service.LinkTrackingService;
 import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.SendMessage;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 @Component
 @Order(0)
-@Slf4j
 @RequiredArgsConstructor
 public class StartCommand implements Command {
-    private final ScrapperClient scrapperClient;
+    private final LinkTrackingService linkTrackingService;
 
     @Override
     public String command() {
@@ -28,13 +26,7 @@ public class StartCommand implements Command {
     @Override
     public SendMessage handle(Update update) {
         long chatId = update.message().chat().id();
-
-        try {
-            scrapperClient.registerChat(chatId);
-        } catch (Exception e) {
-            log.warn("Не удалось зарегистрировать чат {}: {}", chatId, e.getMessage());
-        }
-
+        linkTrackingService.register(chatId);
         return new SendMessage(chatId, "Добро пожаловать! Используйте /help, чтобы посмотреть доступные команды.");
     }
 }

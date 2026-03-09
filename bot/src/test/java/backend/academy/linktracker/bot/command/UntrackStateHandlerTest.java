@@ -1,6 +1,5 @@
 package backend.academy.linktracker.bot.command;
 
-import static backend.academy.linktracker.bot.state.ChatState.WAITING_UNTRACK_URL;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -9,16 +8,14 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import backend.academy.linktracker.bot.client.ScrapperClient;
-import backend.academy.linktracker.bot.dto.RemoveLinkRequest;
 import backend.academy.linktracker.bot.exceptions.LinkNotFoundException;
+import backend.academy.linktracker.bot.service.LinkTrackingService;
 import backend.academy.linktracker.bot.state.ChatStateService;
 import com.pengrad.telegrambot.model.Chat;
 import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.SendMessage;
 import java.net.URI;
-import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,7 +29,7 @@ class UntrackStateHandlerTest {
     static final String URL = "https://github.com/foo/bar";
 
     @Mock
-    ScrapperClient scrapperClient;
+    LinkTrackingService linkTrackingService;
 
     @Mock
     ChatStateService chatStateService;
@@ -41,8 +38,7 @@ class UntrackStateHandlerTest {
 
     @BeforeEach
     void setUp() {
-        handler = new UntrackStateHandler(scrapperClient, chatStateService);
-        when(chatStateService.getState(CHAT_ID)).thenReturn(Optional.of(WAITING_UNTRACK_URL));
+        handler = new UntrackStateHandler(linkTrackingService, chatStateService);
     }
 
     @Test
@@ -50,13 +46,13 @@ class UntrackStateHandlerTest {
         SendMessage response = handler.handleInput(buildUpdate());
 
         assertThat(text(response)).isEqualTo("Ссылка удалена.");
-        verify(scrapperClient).removeLink(CHAT_ID, new RemoveLinkRequest(URI.create(URL)));
+        verify(linkTrackingService).removeLink(CHAT_ID, URI.create(URL));
         verify(chatStateService).clearState(CHAT_ID);
     }
 
     @Test
     void link_not_found_shows_error_and_clears_state() {
-        doThrow(new LinkNotFoundException()).when(scrapperClient).removeLink(anyLong(), any());
+        doThrow(new LinkNotFoundException()).when(linkTrackingService).removeLink(anyLong(), any());
 
         SendMessage response = handler.handleInput(buildUpdate());
 

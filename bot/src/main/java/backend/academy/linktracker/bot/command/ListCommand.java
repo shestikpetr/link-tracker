@@ -1,8 +1,7 @@
 package backend.academy.linktracker.bot.command;
 
-import backend.academy.linktracker.bot.client.ScrapperClient;
 import backend.academy.linktracker.bot.dto.LinkResponse;
-import backend.academy.linktracker.bot.exceptions.LinkNotFoundException;
+import backend.academy.linktracker.bot.service.LinkTrackingService;
 import backend.academy.linktracker.bot.utils.TagParser;
 import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.SendMessage;
@@ -16,7 +15,7 @@ import org.springframework.stereotype.Component;
 @Order(2)
 @RequiredArgsConstructor
 public class ListCommand implements Command {
-    private final ScrapperClient scrapperClient;
+    private final LinkTrackingService linkTrackingService;
     private final TagParser tagParser;
 
     @Override
@@ -26,7 +25,7 @@ public class ListCommand implements Command {
 
     @Override
     public String description() {
-        return "Вывести список всех отслеживаемы ссылок";
+        return "Вывести список всех отслеживаемых ссылок";
     }
 
     @Override
@@ -35,15 +34,7 @@ public class ListCommand implements Command {
         String[] parts = update.message().text().trim().split("\\s+", 2);
         String tag = parts.length > 1 ? tagParser.normalize(parts[1]) : null;
 
-        try {
-            return buildResponse(chatId, scrapperClient.getLinks(chatId, tag));
-        } catch (LinkNotFoundException e) {
-            scrapperClient.registerChat(chatId);
-            return buildResponse(chatId, scrapperClient.getLinks(chatId, tag));
-        }
-    }
-
-    private SendMessage buildResponse(long chatId, List<LinkResponse> links) {
+        List<LinkResponse> links = linkTrackingService.getLinks(chatId, tag);
         String text = links.isEmpty()
                 ? "Нет отслеживаемых ссылок."
                 : links.stream().map(link -> link.url().toString()).collect(Collectors.joining("\n"));
