@@ -1,0 +1,81 @@
+package backend.academy.linktracker.bot.command;
+
+import static backend.academy.linktracker.bot.state.ChatState.WAITING_UNTRACK_URL;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import backend.academy.linktracker.bot.client.ScrapperClient;
+import backend.academy.linktracker.bot.dto.RemoveLinkRequest;
+import backend.academy.linktracker.bot.exceptions.LinkNotFoundException;
+import backend.academy.linktracker.bot.state.ChatStateService;
+import com.pengrad.telegrambot.model.Chat;
+import com.pengrad.telegrambot.model.Message;
+import com.pengrad.telegrambot.model.Update;
+import com.pengrad.telegrambot.request.SendMessage;
+import java.net.URI;
+import java.util.Optional;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+@ExtendWith(MockitoExtension.class)
+class UntrackStateHandlerTest {
+
+    static final long CHAT_ID = 123L;
+    static final String URL = "https://github.com/foo/bar";
+
+    @Mock
+    ScrapperClient scrapperClient;
+
+    @Mock
+    ChatStateService chatStateService;
+
+    UntrackStateHandler handler;
+
+    @BeforeEach
+    void setUp() {
+        handler = new UntrackStateHandler(scrapperClient, chatStateService);
+        when(chatStateService.getState(CHAT_ID)).thenReturn(Optional.of(WAITING_UNTRACK_URL));
+    }
+
+    @Test
+    void removes_link_successfully_and_clears_state() {
+        SendMessage response = handler.handleInput(buildUpdate());
+
+        assertThat(text(response)).isEqualTo("Ссылка удалена.");
+        verify(scrapperClient).removeLink(CHAT_ID, new RemoveLinkRequest(URI.create(URL)));
+        verify(chatStateService).clearState(CHAT_ID);
+    }
+
+    @Test
+    void link_not_found_shows_error_and_clears_state() {
+        doThrow(new LinkNotFoundException()).when(scrapperClient).removeLink(anyLong(), any());
+
+        SendMessage response = handler.handleInput(buildUpdate());
+
+        assertThat(text(response)).isEqualTo("Ссылка не найдена.");
+        verify(chatStateService).clearState(CHAT_ID);
+    }
+
+    private String text(SendMessage message) {
+        return (String) message.getParameters().get("text");
+    }
+
+    private Update buildUpdate() {
+        var chat = mock(Chat.class);
+        when(chat.id()).thenReturn(CHAT_ID);
+        var message = mock(Message.class);
+        when(message.chat()).thenReturn(chat);
+        when(message.text()).thenReturn(URL);
+        var update = mock(Update.class);
+        when(update.message()).thenReturn(message);
+        return update;
+    }
+}
