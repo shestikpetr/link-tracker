@@ -1,5 +1,7 @@
 package backend.academy.linktracker.scrapper.service;
 
+import static backend.academy.linktracker.scrapper.util.LogSanitizer.sanitize;
+
 import backend.academy.linktracker.scrapper.dto.LinkResponse;
 import backend.academy.linktracker.scrapper.exceptions.UnsupportedLinkException;
 import backend.academy.linktracker.scrapper.model.TrackedLink;
@@ -26,15 +28,15 @@ public class LinkService {
 
     public LinkResponse addLink(Long chatId, URI url, List<String> tags, List<String> filters) {
         if (!linkChecker.supports(url)) {
-            log.warn("Ссылка не поддерживается: {} (чат {})", url, chatId);
+            log.warn("Ссылка не поддерживается: {} (чат {})", sanitize(url), sanitize(chatId));
             throw new UnsupportedLinkException(url);
         }
-        log.info("Добавление ссылки {} для чата {}", url, chatId);
+        log.info("Добавление ссылки {} для чата {}", sanitize(url), sanitize(chatId));
         return toResponse(linkRepository.addLink(chatId, url, tags, filters));
     }
 
     public LinkResponse removeLink(Long chatId, URI url) {
-        log.info("Удаление ссылки {} для чата {}", url, chatId);
+        log.info("Удаление ссылки {} для чата {}", sanitize(url), sanitize(chatId));
         return toResponse(linkRepository.removeLink(chatId, url));
     }
 

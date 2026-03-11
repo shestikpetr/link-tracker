@@ -1,5 +1,7 @@
 package backend.academy.linktracker.scrapper.service;
 
+import static backend.academy.linktracker.scrapper.util.LogSanitizer.sanitize;
+
 import backend.academy.linktracker.scrapper.repository.LinkRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,12 +14,12 @@ public class ChatService {
     private final LinkRepository linkRepository;
 
     public void register(Long chatId) {
-        log.info("Регистрация чата {}", chatId);
+        log.info("Регистрация чата {}", sanitize(chatId));
         linkRepository.registerChat(chatId);
     }
 
     public void delete(Long chatId) {
-        log.info("Удаление чата {}", chatId);
+        log.info("Удаление чата {}", sanitize(chatId));
         linkRepository.deleteChat(chatId);
     }
 }
