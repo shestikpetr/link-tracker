@@ -13,16 +13,24 @@ public class StackoverflowLinkHandler implements LinkHandler {
 
     @Override
     public boolean supports(URI url) {
-        return "stackoverflow.com".equals(url.getHost());
+        if (!"stackoverflow.com".equals(url.getHost())) return false;
+        String[] parts = url.getPath().split("/");
+        if (parts.length < 3 || !"questions".equals(parts[1])) return false;
+        try {
+            Long.parseLong(parts[2]);
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
     }
 
     @Override
     public Instant getLastActivity(URI url) {
         String[] parts = url.getPath().split("/");
-        return stackoverflowClient
-                .getQuestions(Long.parseLong(parts[2]))
-                .items()
-                .getFirst()
-                .lastActivityDate();
+        var items = stackoverflowClient.getQuestions(Long.parseLong(parts[2])).items();
+        if (items.isEmpty()) {
+            throw new IllegalStateException("API не вернул вопросы для ссылки: " + url);
+        }
+        return items.getFirst().lastActivityDate();
     }
 }

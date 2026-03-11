@@ -57,6 +57,16 @@ class GithubLinkHandlerTest {
     }
 
     @Test
+    void supports_returns_false_for_github_url_without_path() {
+        assertThat(handler.supports(URI.create("https://github.com"))).isFalse();
+    }
+
+    @Test
+    void supports_returns_false_for_github_url_with_only_owner() {
+        assertThat(handler.supports(URI.create("https://github.com/owner"))).isFalse();
+    }
+
+    @Test
     void getLastActivity_returns_pushed_at_from_api() {
         wiremock.stubFor(get(urlPathEqualTo("/repos/foo/bar"))
                 .willReturn(aResponse()

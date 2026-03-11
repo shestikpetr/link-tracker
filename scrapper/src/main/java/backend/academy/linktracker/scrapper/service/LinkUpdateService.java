@@ -3,8 +3,10 @@ package backend.academy.linktracker.scrapper.service;
 import backend.academy.linktracker.scrapper.model.TrackedLink;
 import backend.academy.linktracker.scrapper.repository.LinkRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class LinkUpdateService {
@@ -17,10 +19,14 @@ public class LinkUpdateService {
             Long chatId = entry.getKey();
 
             for (TrackedLink link : entry.getValue()) {
-                linkChecker.checkLink(link).ifPresent(lastActivity -> {
-                    linkNotifier.notify(link, chatId);
-                    linkRepository.updateLastChecked(link.id(), lastActivity);
-                });
+                try {
+                    linkChecker.checkLink(link).ifPresent(lastActivity -> {
+                        linkNotifier.notify(link, chatId);
+                        linkRepository.updateLastChecked(link.id(), lastActivity);
+                    });
+                } catch (Exception e) {
+                    log.error("Ошибка при проверке ссылки {} для чата {}: {}", link.url(), chatId, e.getMessage());
+                }
             }
         }
     }

@@ -13,7 +13,9 @@ public class GithubLinkHandler implements LinkHandler {
 
     @Override
     public boolean supports(URI url) {
-        return "github.com".equals(url.getHost());
+        if (!"github.com".equals(url.getHost())) return false;
+        String[] parts = url.getPath().split("/");
+        return parts.length >= 3 && !parts[1].isBlank() && !parts[2].isBlank();
     }
 
     @Override
