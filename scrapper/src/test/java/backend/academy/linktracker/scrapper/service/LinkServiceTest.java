@@ -51,7 +51,7 @@ class LinkServiceTest {
                 new TrackedLink(2L, URI.create("https://github.com/a/b"), List.of("hobby"), List.of(), Instant.now());
         when(linkRepository.findByChat(1L)).thenReturn(List.of(linkWork, linkHobby));
 
-        List<LinkResponse> result = linkService.getLinks(1L, "work");
+        List<LinkResponse> result = linkService.getLinks(1L, List.of("work"));
 
         assertThat(result).hasSize(1);
         assertThat(result.getFirst().url()).isEqualTo(GITHUB_URL);

@@ -25,12 +25,12 @@ public class LinkTrackingService {
         }
     }
 
-    public List<LinkResponse> getLinks(Long chatId, String tag) {
+    public List<LinkResponse> getLinks(Long chatId, List<String> tags) {
         try {
-            return scrapperClient.getLinks(chatId, tag);
+            return scrapperClient.getLinks(chatId, tags);
         } catch (LinkNotFoundException e) {
             register(chatId);
-            return scrapperClient.getLinks(chatId, tag);
+            return scrapperClient.getLinks(chatId, tags);
         }
     }
 

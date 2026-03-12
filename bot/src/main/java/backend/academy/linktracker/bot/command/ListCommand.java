@@ -32,9 +32,9 @@ public class ListCommand implements Command {
     public SendMessage handle(Update update) {
         long chatId = update.message().chat().id();
         String[] parts = update.message().text().trim().split("\\s+", 2);
-        String tag = parts.length > 1 ? tagParser.normalize(parts[1]) : null;
+        List<String> tags = parts.length > 1 ? tagParser.parseTags(parts[1]) : null;
 
-        List<LinkResponse> links = linkTrackingService.getLinks(chatId, tag);
+        List<LinkResponse> links = linkTrackingService.getLinks(chatId, tags);
         String text = links.isEmpty()
                 ? "Нет отслеживаемых ссылок."
                 : links.stream().map(link -> link.url().toString()).collect(Collectors.joining("\n"));

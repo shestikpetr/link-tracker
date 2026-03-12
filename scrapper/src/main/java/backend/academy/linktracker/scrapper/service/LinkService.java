@@ -15,9 +15,10 @@ public class LinkService {
     private final LinkRepository linkRepository;
     private final LinkChecker linkChecker;
 
-    public List<LinkResponse> getLinks(Long chatId, String tag) {
+    public List<LinkResponse> getLinks(Long chatId, List<String> tags) {
         return linkRepository.findByChat(chatId).stream()
-                .filter(link -> tag == null || link.tags().contains(tag))
+                .filter(link ->
+                        tags == null || tags.isEmpty() || link.tags().stream().anyMatch(tags::contains))
                 .map(this::toResponse)
                 .toList();
     }

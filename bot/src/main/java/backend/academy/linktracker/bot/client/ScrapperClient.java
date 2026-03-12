@@ -16,7 +16,8 @@ import org.springframework.web.service.annotation.PostExchange;
 @HttpExchange(accept = "application/json", contentType = "application/json")
 public interface ScrapperClient {
     @GetExchange("/links")
-    List<LinkResponse> getLinks(@RequestHeader("Tg-Chat-Id") Long chatId, @RequestParam(required = false) String tag);
+    List<LinkResponse> getLinks(
+            @RequestHeader("Tg-Chat-Id") Long chatId, @RequestParam(required = false) List<String> tags);
 
     @PostExchange("/links")
     void addLink(@RequestHeader("Tg-Chat-Id") Long chatId, @RequestBody AddLinkRequest request);

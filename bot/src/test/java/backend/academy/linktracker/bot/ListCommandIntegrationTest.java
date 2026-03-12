@@ -118,7 +118,7 @@ class ListCommandIntegrationTest {
         telegramBot.setUpdatesListener(botUpdateListener);
         awaitSendMessages();
 
-        verify(1, getRequestedFor(urlPathEqualTo("/links")).withQueryParam("tag", equalTo("тег1")));
+        verify(1, getRequestedFor(urlPathEqualTo("/links")).withQueryParam("tags", equalTo("тег1")));
         verify(
                 1,
                 postRequestedFor(urlMatching("/bot[^/]+/sendMessage"))

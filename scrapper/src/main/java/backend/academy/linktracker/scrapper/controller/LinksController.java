@@ -23,8 +23,8 @@ public class LinksController {
 
     @GetMapping
     public List<LinkResponse> getLinks(
-            @RequestHeader("Tg-Chat-Id") Long chatId, @RequestParam(required = false) String tag) {
-        return linkService.getLinks(chatId, tag);
+            @RequestHeader("Tg-Chat-Id") Long chatId, @RequestParam(required = false) List<String> tags) {
+        return linkService.getLinks(chatId, tags);
     }
 
     @PostMapping

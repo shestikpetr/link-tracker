@@ -42,7 +42,7 @@ class LinksControllerTest {
     @Test
     void get_links_returns_list() throws Exception {
         var link = new LinkResponse(1L, URI.create("https://github.com/foo/bar"), List.of("tag"), List.of());
-        when(linkService.getLinks(1L, null)).thenReturn(List.of(link));
+        when(linkService.getLinks(eq(1L), any())).thenReturn(List.of(link));
 
         mockMvc.perform(get("/links").header("Tg-Chat-Id", 1))
                 .andExpect(status().isOk())
@@ -51,10 +51,10 @@ class LinksControllerTest {
     }
 
     @Test
-    void get_links_with_tag_passes_tag_to_service() throws Exception {
-        when(linkService.getLinks(1L, "work")).thenReturn(List.of());
+    void get_links_with_tags_passes_tags_to_service() throws Exception {
+        when(linkService.getLinks(eq(1L), any())).thenReturn(List.of());
 
-        mockMvc.perform(get("/links").header("Tg-Chat-Id", 1).param("tag", "work"))
+        mockMvc.perform(get("/links").header("Tg-Chat-Id", 1).param("tags", "work", "hobby"))
                 .andExpect(status().isOk());
     }
 
