@@ -8,6 +8,7 @@ import backend.academy.linktracker.scrapper.exceptions.LinkNotFoundException;
 import backend.academy.linktracker.scrapper.exceptions.UnsupportedLinkException;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -15,43 +16,41 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
     @ExceptionHandler(ChatAlreadyExistsException.class)
     public ResponseEntity<ApiErrorResponse> handleChatAlreadyExists(ChatAlreadyExistsException ex) {
-        log.warn("Чат уже зарегистрирован: {}", ex.getMessage());
-        return ResponseEntity.status(409)
-                .body(new ApiErrorResponse(
-                        "Чат уже зарегистрирован", "409", ex.getClass().getSimpleName(), ex.getMessage(), List.of()));
+        return buildResponse(ex, HttpStatusCode.valueOf(409), "Чат уже зарегистрирован");
     }
 
     @ExceptionHandler(ChatNotFoundException.class)
     public ResponseEntity<ApiErrorResponse> handleChatNotFound(ChatNotFoundException ex) {
-        log.warn("Чат не найден: {}", ex.getMessage());
-        return ResponseEntity.status(404)
-                .body(new ApiErrorResponse(
-                        "Чат не найден", "404", ex.getClass().getSimpleName(), ex.getMessage(), List.of()));
+        return buildResponse(ex, HttpStatusCode.valueOf(404), "Чат не найден");
     }
 
     @ExceptionHandler(LinkAlreadyExistsException.class)
     public ResponseEntity<ApiErrorResponse> handleLinkAlreadyExists(LinkAlreadyExistsException ex) {
-        log.warn("Ссылка уже отслеживается: {}", ex.getMessage());
-        return ResponseEntity.status(409)
-                .body(new ApiErrorResponse(
-                        "Ссылка уже отслеживается", "409", ex.getClass().getSimpleName(), ex.getMessage(), List.of()));
+        return buildResponse(ex, HttpStatusCode.valueOf(409), "Ссылка уже отслеживается");
     }
 
     @ExceptionHandler(LinkNotFoundException.class)
     public ResponseEntity<ApiErrorResponse> handleLinkNotFound(LinkNotFoundException ex) {
-        log.warn("Ссылка не найдена: {}", ex.getMessage());
-        return ResponseEntity.status(404)
-                .body(new ApiErrorResponse(
-                        "Ссылка не найдена", "404", ex.getClass().getSimpleName(), ex.getMessage(), List.of()));
+        return buildResponse(ex, HttpStatusCode.valueOf(404), "Ссылка не найдена");
     }
 
     @ExceptionHandler(UnsupportedLinkException.class)
     public ResponseEntity<ApiErrorResponse> handleUnsupportedLink(UnsupportedLinkException ex) {
-        log.warn("Ссылка не поддерживается: {}", ex.getMessage());
-        return ResponseEntity.status(422)
+        return buildResponse(ex, HttpStatusCode.valueOf(422), "Ссылка не поддерживается");
+    }
+
+    private ResponseEntity<ApiErrorResponse> buildResponse(
+            RuntimeException ex, HttpStatusCode status, String description) {
+        log.warn("{}: {}", description, ex.getMessage());
+        return ResponseEntity.status(status)
                 .body(new ApiErrorResponse(
-                        "Ссылка не поддерживается", "422", ex.getClass().getSimpleName(), ex.getMessage(), List.of()));
+                        description,
+                        String.valueOf(status.value()),
+                        ex.getClass().getSimpleName(),
+                        ex.getMessage(),
+                        List.of()));
     }
 }
