@@ -21,7 +21,11 @@ public class LinkTrackingService {
         try {
             scrapperClient.registerChat(chatId);
         } catch (Exception e) {
-            log.debug("Чат {} уже зарегистрирован: {}", chatId, e.getMessage());
+            log.atDebug()
+                    .setMessage("Чат уже зарегистрирован")
+                    .addKeyValue("chatId", chatId)
+                    .addKeyValue("error", e.getMessage())
+                    .log();
         }
     }
 

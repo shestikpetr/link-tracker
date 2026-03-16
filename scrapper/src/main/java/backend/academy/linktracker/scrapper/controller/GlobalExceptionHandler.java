@@ -44,7 +44,11 @@ public class GlobalExceptionHandler {
 
     private ResponseEntity<ApiErrorResponse> buildResponse(
             RuntimeException ex, HttpStatusCode status, String description) {
-        log.warn("Обработка исключения {}: {}", description, ex.getMessage());
+        log.atWarn()
+                .setMessage("Обработка исключения")
+                .addKeyValue("description", description)
+                .addKeyValue("error", ex.getMessage())
+                .log();
         return ResponseEntity.status(status)
                 .body(new ApiErrorResponse(
                         description,

@@ -16,9 +16,16 @@ public class BotClient {
     public <T extends BaseRequest<T, R>, R extends BaseResponse> void execute(BaseRequest<T, R> request) {
         R response = telegramBot.execute(request);
         if (response.isOk()) {
-            log.debug("Запрос {} выполнен успешно", request.getMethod());
+            log.atDebug()
+                    .setMessage("Запрос выполнен успешно")
+                    .addKeyValue("method", request.getMethod())
+                    .log();
         } else {
-            log.error("Ошибка запроса {}: {}", request.getMethod(), response.description());
+            log.atError()
+                    .setMessage("Ошибка запроса")
+                    .addKeyValue("method", request.getMethod())
+                    .addKeyValue("error", response.description())
+                    .log();
         }
     }
 }

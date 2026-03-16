@@ -27,7 +27,12 @@ public class CommandDispatcher {
                     .map(cmd -> cmd.handle(update))
                     .orElseGet(() -> new SendMessage(chatId, UNKNOWN_COMMAND_TEXT));
         } catch (Exception e) {
-            log.error("Ошибка при выполнении команды '{}' для chatId={}", commandName, chatId, e);
+            log.atError()
+                    .setMessage("Ошибка при выполнении команды")
+                    .addKeyValue("command", commandName)
+                    .addKeyValue("chatId", chatId)
+                    .setCause(e)
+                    .log();
             response = new SendMessage(chatId, "Произошла внутренняя ошибка.");
         }
         botClient.execute(response);

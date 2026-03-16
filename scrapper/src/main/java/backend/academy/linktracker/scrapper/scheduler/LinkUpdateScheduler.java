@@ -14,8 +14,8 @@ public class LinkUpdateScheduler {
 
     @Scheduled(fixedDelayString = "${app.scheduler.interval}")
     public void checkUpdates() {
-        log.debug("Запуск проверки обновлений");
+        log.atDebug().setMessage("Запуск проверки обновлений").log();
         linkUpdateService.checkAndNotify();
-        log.debug("Проверка обновлений завершена");
+        log.atDebug().setMessage("Проверка обновлений завершена").log();
     }
 }

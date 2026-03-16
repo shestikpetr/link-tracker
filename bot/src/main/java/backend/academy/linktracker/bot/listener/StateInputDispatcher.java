@@ -35,7 +35,12 @@ public class StateInputDispatcher {
             try {
                 response = cmd.handleInput(update);
             } catch (Exception e) {
-                log.error("Ошибка при обработке состояния {} для chatId={}", state, chatId, e);
+                log.atError()
+                        .setMessage("Ошибка при обработке состояния")
+                        .addKeyValue("state", state)
+                        .addKeyValue("chatId", chatId)
+                        .setCause(e)
+                        .log();
                 response = new SendMessage(chatId, "Произошла внутренняя ошибка.");
             }
             botClient.execute(response);

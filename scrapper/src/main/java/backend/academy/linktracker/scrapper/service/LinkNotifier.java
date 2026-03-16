@@ -15,7 +15,11 @@ public class LinkNotifier {
     private final BotClient botClient;
 
     public void notify(URI url, List<Long> chatIds) {
-        log.info("Отправка обновления по ссылке {} в чаты {}", url, chatIds);
+        log.atInfo()
+                .setMessage("Отправка обновления")
+                .addKeyValue("url", url)
+                .addKeyValue("chatIds", chatIds)
+                .log();
         botClient.sendUpdate(new LinkUpdate(null, url, "Обновление", chatIds));
     }
 }

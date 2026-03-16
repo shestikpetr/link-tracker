@@ -34,7 +34,11 @@ public class LinkUpdateService {
                     }
                 });
             } catch (Exception e) {
-                log.error("Ошибка при проверке ссылки {}: {}", url, e.getMessage());
+                log.atError()
+                        .setMessage("Ошибка при проверке ссылки")
+                        .addKeyValue("url", url)
+                        .addKeyValue("error", e.getMessage())
+                        .log();
             }
         }
     }

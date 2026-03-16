@@ -20,7 +20,11 @@ public class MessageHandler {
         long chatId = update.message().chat().id();
         String text = update.message().text();
 
-        log.info("Получено сообщение от chatId={}: {}", chatId, text);
+        log.atInfo()
+                .setMessage("Получено сообщение")
+                .addKeyValue("chatId", chatId)
+                .addKeyValue("text", text)
+                .log();
 
         if (text.startsWith("/")) {
             chatStateService.clearState(chatId);
