@@ -1,10 +1,12 @@
-package backend.academy.linktracker.scrapper.repository;
+package backend.academy.linktracker.scrapper.repository.inmemory;
 
 import backend.academy.linktracker.scrapper.exceptions.ChatNotFoundException;
 import backend.academy.linktracker.scrapper.exceptions.LinkAlreadyExistsException;
 import backend.academy.linktracker.scrapper.exceptions.LinkNotFoundException;
 import backend.academy.linktracker.scrapper.model.ChatLink;
 import backend.academy.linktracker.scrapper.model.TrackedLink;
+import backend.academy.linktracker.scrapper.repository.ChatRepository;
+import backend.academy.linktracker.scrapper.repository.LinkRepository;
 import java.net.URI;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -14,10 +16,12 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Repository;
 
-@RequiredArgsConstructor
 @Repository
+@RequiredArgsConstructor
+@ConditionalOnProperty(name = "app.database.access-type", havingValue = "INMEMORY")
 public class InMemoryLinkRepository implements LinkRepository {
     private final Map<Long, Map<Long, TrackedLink>> storage = new ConcurrentHashMap<>();
     private final ChatRepository chatRepository;
