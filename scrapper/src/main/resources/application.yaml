@@ -6,6 +6,16 @@ spring:
     name: scrapper
   config:
     import: optional:file:scrapper/.env[.properties]
+  datasource:
+    url: jdbc:postgresql://localhost:5432/scrapper
+    username: postgres
+    password: postgres
+  liquibase:
+    change-log: file:migrations/master.xml
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
 
 app:
   stackoverflow:
@@ -17,3 +27,5 @@ app:
     base-url: http://localhost:8080
   scheduler:
     interval: PT1M
+  database:
+    access-type: SQL
