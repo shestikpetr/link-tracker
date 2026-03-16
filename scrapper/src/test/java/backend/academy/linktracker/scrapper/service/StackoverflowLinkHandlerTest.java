@@ -80,12 +80,12 @@ class StackoverflowLinkHandlerTest {
                         .withStatus(200)
                         .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                         .withBody("""
-                                {"items": [{"last_activity_date": "2024-06-01T12:00:00Z"}]}
+                                {"items": [{"last_activity_date": 1773651521}]}
                                 """)));
 
         Instant result = handler.getLastActivity(URI.create("https://stackoverflow.com/questions/12345"));
 
-        assertThat(result).isEqualTo(Instant.parse("2024-06-01T12:00:00Z"));
+        assertThat(result).isEqualTo(Instant.ofEpochSecond(1773651521));
     }
 
     @Test
