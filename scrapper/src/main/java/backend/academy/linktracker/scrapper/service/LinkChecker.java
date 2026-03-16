@@ -1,6 +1,5 @@
 package backend.academy.linktracker.scrapper.service;
 
-import backend.academy.linktracker.scrapper.model.TrackedLink;
 import java.net.URI;
 import java.time.Instant;
 import java.util.List;
@@ -17,11 +16,7 @@ public class LinkChecker {
         return linkHandlers.stream().anyMatch(h -> h.supports(url));
     }
 
-    public Optional<Instant> checkLink(TrackedLink link) {
-        return linkHandlers.stream()
-                .filter(h -> h.supports(link.url()))
-                .findFirst()
-                .map(h -> h.getLastActivity(link.url()))
-                .filter(lastActivity -> lastActivity.isAfter(link.lastCheckedAt()));
+    public Optional<Instant> getLastActivity(URI url) {
+        return linkHandlers.stream().filter(h -> h.supports(url)).findFirst().map(h -> h.getLastActivity(url));
     }
 }

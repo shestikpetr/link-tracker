@@ -1,7 +1,7 @@
 package backend.academy.linktracker.scrapper.service;
 
-import backend.academy.linktracker.scrapper.model.TrackedLink;
 import backend.academy.linktracker.scrapper.repository.LinkRepository;
+import java.net.URI;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -15,18 +15,19 @@ public class LinkUpdateService {
     private final LinkNotifier linkNotifier;
 
     public void checkAndNotify() {
-        for (var entry : linkRepository.findAllGroupedByChat().entrySet()) {
-            Long chatId = entry.getKey();
-
-            for (TrackedLink link : entry.getValue()) {
-                try {
-                    linkChecker.checkLink(link).ifPresent(lastActivity -> {
-                        linkNotifier.notify(link, chatId);
-                        linkRepository.updateLastChecked(link.id(), lastActivity);
-                    });
-                } catch (Exception e) {
-                    log.error("Ошибка при проверке ссылки {} для чата {}: {}", link.url(), chatId, e.getMessage());
-                }
+        for (var entry : linkRepository.findAllGroupedByUrl().entrySet()) {
+            URI url = entry.getKey();
+            try {
+                linkChecker.getLastActivity(url).ifPresent(lastActivity -> {
+                    for (var chatLink : entry.getValue()) {
+                        if (lastActivity.isAfter(chatLink.link().lastCheckedAt())) {
+                            linkNotifier.notify(chatLink.link(), chatLink.chatId());
+                            linkRepository.updateLastChecked(chatLink.link().id(), lastActivity);
+                        }
+                    }
+                });
+            } catch (Exception e) {
+                log.error("Ошибка при проверке ссылки {}: {}", url, e.getMessage());
             }
         }
     }

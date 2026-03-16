@@ -4,9 +4,12 @@ import backend.academy.linktracker.scrapper.exceptions.ChatAlreadyExistsExceptio
 import backend.academy.linktracker.scrapper.exceptions.ChatNotFoundException;
 import backend.academy.linktracker.scrapper.exceptions.LinkAlreadyExistsException;
 import backend.academy.linktracker.scrapper.exceptions.LinkNotFoundException;
+import backend.academy.linktracker.scrapper.model.ChatLink;
 import backend.academy.linktracker.scrapper.model.TrackedLink;
 import java.net.URI;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -65,6 +68,18 @@ public class InMemoryLinkRepository implements LinkRepository {
         return storage.entrySet().stream()
                 .collect(Collectors.toMap(
                         Map.Entry::getKey, e -> List.copyOf(e.getValue().values())));
+    }
+
+    @Override
+    public Map<URI, List<ChatLink>> findAllGroupedByUrl() {
+        Map<URI, List<ChatLink>> result = new LinkedHashMap<>();
+        for (var chatEntry : storage.entrySet()) {
+            Long chatId = chatEntry.getKey();
+            for (TrackedLink link : chatEntry.getValue().values()) {
+                result.computeIfAbsent(link.url(), _ -> new ArrayList<>()).add(new ChatLink(chatId, link));
+            }
+        }
+        return result;
     }
 
     @Override

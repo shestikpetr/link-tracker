@@ -4,9 +4,11 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import backend.academy.linktracker.scrapper.model.ChatLink;
 import backend.academy.linktracker.scrapper.model.TrackedLink;
 import backend.academy.linktracker.scrapper.repository.LinkRepository;
 import java.net.URI;
@@ -45,11 +47,14 @@ class LinkUpdateServiceTest {
         var linkB =
                 new TrackedLink(2L, URL_B, List.of(), List.of(), Instant.now().minusSeconds(120));
 
-        when(linkRepository.findAllGroupedByChat()).thenReturn(Map.of(1L, List.of(linkA), 2L, List.of(linkB)));
+        when(linkRepository.findAllGroupedByUrl())
+                .thenReturn(Map.of(
+                        URL_A, List.of(new ChatLink(1L, linkA)),
+                        URL_B, List.of(new ChatLink(2L, linkB))));
 
         Instant newActivity = Instant.now();
-        when(linkChecker.checkLink(linkA)).thenReturn(Optional.of(newActivity));
-        when(linkChecker.checkLink(linkB)).thenReturn(Optional.empty());
+        when(linkChecker.getLastActivity(URL_A)).thenReturn(Optional.of(newActivity));
+        when(linkChecker.getLastActivity(URL_B)).thenReturn(Optional.empty());
 
         linkUpdateService.checkAndNotify();
 
@@ -60,8 +65,8 @@ class LinkUpdateServiceTest {
     @Test
     void checkAndNotify_does_not_notify_when_no_updates() {
         var link = new TrackedLink(1L, URL_A, List.of(), List.of(), Instant.now());
-        when(linkRepository.findAllGroupedByChat()).thenReturn(Map.of(1L, List.of(link)));
-        when(linkChecker.checkLink(link)).thenReturn(Optional.empty());
+        when(linkRepository.findAllGroupedByUrl()).thenReturn(Map.of(URL_A, List.of(new ChatLink(1L, link))));
+        when(linkChecker.getLastActivity(URL_A)).thenReturn(Optional.empty());
 
         linkUpdateService.checkAndNotify();
 
@@ -72,10 +77,10 @@ class LinkUpdateServiceTest {
     void checkAndNotify_updates_lastCheckedAt_after_notification() {
         var link =
                 new TrackedLink(1L, URL_A, List.of(), List.of(), Instant.now().minusSeconds(60));
-        when(linkRepository.findAllGroupedByChat()).thenReturn(Map.of(1L, List.of(link)));
+        when(linkRepository.findAllGroupedByUrl()).thenReturn(Map.of(URL_A, List.of(new ChatLink(1L, link))));
 
         Instant newActivity = Instant.now();
-        when(linkChecker.checkLink(link)).thenReturn(Optional.of(newActivity));
+        when(linkChecker.getLastActivity(URL_A)).thenReturn(Optional.of(newActivity));
 
         linkUpdateService.checkAndNotify();
 
@@ -83,22 +88,22 @@ class LinkUpdateServiceTest {
     }
 
     @Test
-    void checkAndNotify_notifies_both_chats_tracking_the_same_url() {
+    void checkAndNotify_notifies_both_chats_tracking_the_same_url_with_single_api_call() {
         var linkChat1 =
                 new TrackedLink(1L, URL_A, List.of(), List.of(), Instant.now().minusSeconds(120));
         var linkChat2 =
                 new TrackedLink(2L, URL_A, List.of(), List.of(), Instant.now().minusSeconds(120));
 
-        when(linkRepository.findAllGroupedByChat())
-                .thenReturn(Map.of(10L, List.of(linkChat1), 20L, List.of(linkChat2)));
+        when(linkRepository.findAllGroupedByUrl())
+                .thenReturn(Map.of(URL_A, List.of(new ChatLink(10L, linkChat1), new ChatLink(20L, linkChat2))));
 
         Instant newActivity = Instant.now();
-        when(linkChecker.checkLink(linkChat1)).thenReturn(Optional.of(newActivity));
-        when(linkChecker.checkLink(linkChat2)).thenReturn(Optional.of(newActivity));
+        when(linkChecker.getLastActivity(URL_A)).thenReturn(Optional.of(newActivity));
 
         linkUpdateService.checkAndNotify();
 
         verify(linkNotifier).notify(linkChat1, 10L);
         verify(linkNotifier).notify(linkChat2, 20L);
+        verify(linkChecker, times(1)).getLastActivity(URL_A);
     }
 }
