@@ -5,7 +5,7 @@ import java.net.URI;
 import java.util.List;
 
 public record LinkUpdate(
-        @NotNull Long id,
+        Long id,
         @NotNull URI url,
         String description,
         @NotNull List<Long> tgChatIds) {}

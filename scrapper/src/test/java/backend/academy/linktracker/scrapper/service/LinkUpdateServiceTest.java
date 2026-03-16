@@ -1,7 +1,7 @@
 package backend.academy.linktracker.scrapper.service;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -58,8 +58,8 @@ class LinkUpdateServiceTest {
 
         linkUpdateService.checkAndNotify();
 
-        verify(linkNotifier).notify(linkA, 1L);
-        verify(linkNotifier, never()).notify(eq(linkB), anyLong());
+        verify(linkNotifier).notify(URL_A, List.of(1L));
+        verify(linkNotifier, never()).notify(eq(URL_B), anyList());
     }
 
     @Test
@@ -70,7 +70,7 @@ class LinkUpdateServiceTest {
 
         linkUpdateService.checkAndNotify();
 
-        verify(linkNotifier, never()).notify(any(), anyLong());
+        verify(linkNotifier, never()).notify(any(URI.class), anyList());
     }
 
     @Test
@@ -102,8 +102,7 @@ class LinkUpdateServiceTest {
 
         linkUpdateService.checkAndNotify();
 
-        verify(linkNotifier).notify(linkChat1, 10L);
-        verify(linkNotifier).notify(linkChat2, 20L);
+        verify(linkNotifier).notify(URL_A, List.of(10L, 20L));
         verify(linkChecker, times(1)).getLastActivity(URL_A);
     }
 }

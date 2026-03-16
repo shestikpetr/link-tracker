@@ -1,7 +1,10 @@
 package backend.academy.linktracker.scrapper.service;
 
+import backend.academy.linktracker.scrapper.model.ChatLink;
 import backend.academy.linktracker.scrapper.repository.LinkRepository;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -19,11 +22,15 @@ public class LinkUpdateService {
             URI url = entry.getKey();
             try {
                 linkChecker.getLastActivity(url).ifPresent(lastActivity -> {
-                    for (var chatLink : entry.getValue()) {
+                    List<Long> chatIds = new ArrayList<>();
+                    for (ChatLink chatLink : entry.getValue()) {
                         if (lastActivity.isAfter(chatLink.link().lastCheckedAt())) {
-                            linkNotifier.notify(chatLink.link(), chatLink.chatId());
+                            chatIds.add(chatLink.chatId());
                             linkRepository.updateLastChecked(chatLink.link().id(), lastActivity);
                         }
+                    }
+                    if (!chatIds.isEmpty()) {
+                        linkNotifier.notify(url, chatIds);
                     }
                 });
             } catch (Exception e) {
