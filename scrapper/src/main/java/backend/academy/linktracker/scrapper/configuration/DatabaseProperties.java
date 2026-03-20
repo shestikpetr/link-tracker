@@ -7,7 +7,8 @@ import org.springframework.validation.annotation.Validated;
 @Validated
 public record DatabaseProperties(AccessType accessType) {
     public enum AccessType {
+        INMEMORY,
         SQL,
-        ORM
+        ORM,
     }
 }
