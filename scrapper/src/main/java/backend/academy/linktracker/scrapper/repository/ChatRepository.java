@@ -5,5 +5,5 @@ public interface ChatRepository {
 
     void deleteChat(Long chatId);
 
-    boolean existsChat(Long chatId);
+    boolean chatExists(Long chatId);
 }

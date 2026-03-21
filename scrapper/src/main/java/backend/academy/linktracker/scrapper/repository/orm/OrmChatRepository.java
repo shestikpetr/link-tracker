@@ -35,7 +35,7 @@ public class OrmChatRepository implements ChatRepository {
     }
 
     @Override
-    public boolean existsChat(Long chatId) {
+    public boolean chatExists(Long chatId) {
         return jpaChatRepository.existsById(chatId);
     }
 }

@@ -95,7 +95,7 @@ public class InMemoryLinkRepository implements LinkRepository {
     }
 
     private void requireChatExists(Long chatId) {
-        if (!chatRepository.existsChat(chatId)) {
+        if (!chatRepository.chatExists(chatId)) {
             throw new ChatNotFoundException(chatId);
         }
     }

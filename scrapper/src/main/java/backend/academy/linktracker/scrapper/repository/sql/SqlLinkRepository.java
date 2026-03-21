@@ -23,6 +23,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 @Repository
+@Transactional
 @RequiredArgsConstructor
 @ConditionalOnProperty(name = "app.database.access-type", havingValue = "SQL")
 public class SqlLinkRepository implements LinkRepository {
@@ -32,9 +33,8 @@ public class SqlLinkRepository implements LinkRepository {
     private record LinkRow(Long chatId, Long id, String url, Instant lastCheckedAt, String[] filters, String tagName) {}
 
     @Override
-    @Transactional
     public TrackedLink addLink(Long chatId, URI url, List<String> tags, List<String> filters) {
-        if (!chatRepository.existsChat(chatId)) {
+        if (!chatRepository.chatExists(chatId)) {
             throw new ChatNotFoundException(chatId);
         }
 
@@ -87,9 +87,8 @@ public class SqlLinkRepository implements LinkRepository {
     }
 
     @Override
-    @Transactional
     public TrackedLink removeLink(Long chatId, URI url) {
-        if (!chatRepository.existsChat(chatId)) {
+        if (!chatRepository.chatExists(chatId)) {
             throw new ChatNotFoundException(chatId);
         }
 
@@ -143,8 +142,9 @@ public class SqlLinkRepository implements LinkRepository {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<TrackedLink> findByChat(Long chatId) {
-        if (!chatRepository.existsChat(chatId)) {
+        if (!chatRepository.chatExists(chatId)) {
             throw new ChatNotFoundException(chatId);
         }
 
@@ -186,15 +186,16 @@ public class SqlLinkRepository implements LinkRepository {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Map<URI, List<ChatLink>> findAllGroupedByUrl() {
         var rows = jdbcClient
                 .sql("""
-                        SELECT cl.chat_id, l.id, l.url, l.last_checked_at, cl.filters, t.name AS tag_name
-                        FROM links l
-                        JOIN chat_links cl ON l.id = cl.link_id
-                        LEFT JOIN link_tags lt ON lt.chat_id = cl.chat_id AND lt.link_id = cl.link_id
-                        LEFT JOIN tags t ON t.id = lt.tag_id
-                        """)
+                    SELECT cl.chat_id, l.id, l.url, l.last_checked_at, cl.filters, t.name AS tag_name
+                    FROM links l
+                    JOIN chat_links cl ON l.id = cl.link_id
+                    LEFT JOIN link_tags lt ON lt.chat_id = cl.chat_id AND lt.link_id = cl.link_id
+                    LEFT JOIN tags t ON t.id = lt.tag_id
+                    """)
                 .query((rs, _) -> new LinkRow(
                         rs.getLong("chat_id"),
                         rs.getLong("id"),

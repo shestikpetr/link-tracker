@@ -28,7 +28,7 @@ public class InMemoryChatRepository implements ChatRepository {
     }
 
     @Override
-    public boolean existsChat(Long chatId) {
+    public boolean chatExists(Long chatId) {
         return chats.contains(chatId);
     }
 }

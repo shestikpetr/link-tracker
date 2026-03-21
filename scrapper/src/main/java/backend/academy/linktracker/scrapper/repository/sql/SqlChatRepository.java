@@ -40,7 +40,7 @@ public class SqlChatRepository implements ChatRepository {
     }
 
     @Override
-    public boolean existsChat(Long chatId) {
+    public boolean chatExists(Long chatId) {
         return jdbcClient
                 .sql("SELECT EXISTS(SELECT 1 FROM chats WHERE id = :chatId)")
                 .param("chatId", chatId)
