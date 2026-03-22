@@ -9,11 +9,12 @@ app:
   scheduler:
     interval: PT1H
   database:
-    access-type: INMEMORY
+    access-type: SQL # INMEMORY, SQL, ORM
 
 spring:
-  autoconfigure:
-    exclude:
-      - org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration
-      - org.springframework.boot.hibernate.autoconfigure.HibernateJpaAutoConfiguration
-      - org.springframework.boot.liquibase.autoconfigure.LiquibaseAutoConfiguration
+  liquibase:
+    change-log: classpath:/db/changelog/master.xml
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false

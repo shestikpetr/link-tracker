@@ -207,6 +207,15 @@
     </dependencies>
 
     <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+            </resource>
+            <resource>
+                <targetPath>db/changelog</targetPath>
+                <directory>${project.basedir}/../migrations</directory>
+            </resource>
+        </resources>
         <plugins>
             <!-- .proto gRPC compilation: -->
             <!-- <plugin> -->

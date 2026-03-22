@@ -37,7 +37,7 @@ public class LinkUpdateService {
                 log.atError()
                         .setMessage("Ошибка при проверке ссылки")
                         .addKeyValue("url", url)
-                        .addKeyValue("error", e.getMessage())
+                        .setCause(e)
                         .log();
             }
         }

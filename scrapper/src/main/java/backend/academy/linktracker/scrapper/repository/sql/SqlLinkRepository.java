@@ -9,6 +9,8 @@ import backend.academy.linktracker.scrapper.repository.ChatRepository;
 import backend.academy.linktracker.scrapper.repository.LinkRepository;
 import java.net.URI;
 import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -241,7 +243,7 @@ public class SqlLinkRepository implements LinkRepository {
     public void updateLastChecked(Long linkId, Instant lastCheckedAt) {
         jdbcClient
                 .sql("UPDATE links SET last_checked_at = :lastCheckedAt WHERE id = :linkId")
-                .param("lastCheckedAt", lastCheckedAt)
+                .param("lastCheckedAt", OffsetDateTime.ofInstant(lastCheckedAt, ZoneOffset.UTC))
                 .param("linkId", linkId)
                 .update();
     }
