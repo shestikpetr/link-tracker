@@ -1,5 +1,5 @@
 --liquibase formatted sql
---changeset author:04-create-tags
+--changeset shestikpetr:04-create-tags
 
 CREATE TABLE tags
 (

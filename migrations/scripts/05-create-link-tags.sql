@@ -1,5 +1,5 @@
 --liquibase formatted sql
---changeset author:05-create-link-tags
+--changeset shestikpetr:05-create-link-tags
 
 CREATE TABLE link_tags
 (

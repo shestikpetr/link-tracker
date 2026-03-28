@@ -1,5 +1,5 @@
 --liquibase formatted sql
---changeset author:01-create-chats
+--changeset shestikpetr:01-create-chats
 
 CREATE TABLE chats
 (

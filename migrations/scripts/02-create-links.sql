@@ -1,5 +1,5 @@
 --liquibase formatted sql
---changeset author:02-create-links
+--changeset shestikpetr:02-create-links
 
 CREATE TABLE links
 (
