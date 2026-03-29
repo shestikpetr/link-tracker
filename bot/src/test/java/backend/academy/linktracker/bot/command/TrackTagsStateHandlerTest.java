@@ -60,11 +60,13 @@ class TrackTagsStateHandlerTest {
     void already_tracked_shows_error_and_preserves_state() {
         URI url = URI.create("https://github.com/foo/bar");
         when(chatStateService.getPendingUrl(CHAT_ID)).thenReturn(url);
-        doThrow(new LinkAlreadyTrackedException()).when(linkTrackingService).addLink(anyLong(), any(), any());
+        doThrow(new LinkAlreadyTrackedException("Ссылка уже отслеживается"))
+                .when(linkTrackingService)
+                .addLink(anyLong(), any(), any());
 
         SendMessage response = handler.handleInput(buildUpdate("тег1"));
 
-        assertThat(text(response)).isEqualTo("Ссылка уже отслеживается.");
+        assertThat(text(response)).isEqualTo("Ссылка уже отслеживается");
         verify(chatStateService, never()).clearState(CHAT_ID);
     }
 
@@ -72,7 +74,9 @@ class TrackTagsStateHandlerTest {
     void unsupported_link_shows_error_and_preserves_state() {
         URI url = URI.create("https://github.com/foo/bar");
         when(chatStateService.getPendingUrl(CHAT_ID)).thenReturn(url);
-        doThrow(new UnsupportedLinkException()).when(linkTrackingService).addLink(anyLong(), any(), any());
+        doThrow(new UnsupportedLinkException("Ссылка не поддерживается"))
+                .when(linkTrackingService)
+                .addLink(anyLong(), any(), any());
 
         SendMessage response = handler.handleInput(buildUpdate("тег1"));
 

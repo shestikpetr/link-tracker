@@ -53,11 +53,13 @@ class UntrackStateHandlerTest {
 
     @Test
     void link_not_found_shows_error_and_preserves_state() {
-        doThrow(new LinkNotFoundException()).when(linkTrackingService).removeLink(anyLong(), any());
+        doThrow(new LinkNotFoundException("Ссылка не найдена"))
+                .when(linkTrackingService)
+                .removeLink(anyLong(), any());
 
         SendMessage response = handler.handleInput(buildUpdate());
 
-        assertThat(text(response)).isEqualTo("Ссылка не найдена.");
+        assertThat(text(response)).isEqualTo("Ссылка не найдена");
         verify(chatStateService, never()).clearState(CHAT_ID);
     }
 
