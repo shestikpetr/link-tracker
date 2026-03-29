@@ -1,7 +1,7 @@
 package backend.academy.linktracker.bot.listener;
 
 import backend.academy.linktracker.bot.client.BotClient;
-import backend.academy.linktracker.bot.command.StatefulCommand;
+import backend.academy.linktracker.bot.command.StateHandler;
 import backend.academy.linktracker.bot.state.ChatState;
 import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.SendMessage;
@@ -14,21 +14,19 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 public class StateInputDispatcher {
-    private final Map<ChatState, StatefulCommand> stateHandlers;
+    private final Map<ChatState, StateHandler> stateHandlers;
     private final BotClient botClient;
 
-    public StateInputDispatcher(List<StatefulCommand> statefulCommands, BotClient botClient) {
+    public StateInputDispatcher(List<StateHandler> stateHandlers, BotClient botClient) {
         this.botClient = botClient;
         this.stateHandlers = new EnumMap<>(ChatState.class);
-        for (StatefulCommand cmd : statefulCommands) {
-            for (ChatState state : cmd.handledStates()) {
-                stateHandlers.put(state, cmd);
-            }
+        for (StateHandler cmd : stateHandlers) {
+            this.stateHandlers.put(cmd.handledState(), cmd);
         }
     }
 
     public void dispatch(ChatState state, Update update) {
-        StatefulCommand cmd = stateHandlers.get(state);
+        StateHandler cmd = stateHandlers.get(state);
         if (cmd != null) {
             long chatId = update.message().chat().id();
             SendMessage response;

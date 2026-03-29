@@ -9,30 +9,29 @@ import backend.academy.linktracker.bot.state.ChatStateService;
 import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.SendMessage;
 import java.net.URI;
-import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class UntrackStateHandler implements StatefulCommand {
+public class UntrackStateHandler implements StateHandler {
     private final LinkTrackingService linkTrackingService;
     private final ChatStateService chatStateService;
 
     @Override
-    public Set<ChatState> handledStates() {
-        return Set.of(WAITING_UNTRACK_URL);
+    public ChatState handledState() {
+        return WAITING_UNTRACK_URL;
     }
 
     @Override
     public SendMessage handleInput(Update update) {
         long chatId = update.message().chat().id();
-        chatStateService.clearState(chatId);
-
         String text;
+
         try {
             linkTrackingService.removeLink(
                     chatId, URI.create(update.message().text().trim()));
+            chatStateService.clearState(chatId);
             text = "Ссылка удалена.";
         } catch (LinkNotFoundException e) {
             text = e.getMessage();

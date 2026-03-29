@@ -9,4 +9,6 @@ public interface Command {
     String description();
 
     SendMessage handle(Update update);
+
+    int order();
 }

@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -51,13 +52,13 @@ class UntrackStateHandlerTest {
     }
 
     @Test
-    void link_not_found_shows_error_and_clears_state() {
+    void link_not_found_shows_error_and_preserves_state() {
         doThrow(new LinkNotFoundException()).when(linkTrackingService).removeLink(anyLong(), any());
 
         SendMessage response = handler.handleInput(buildUpdate());
 
         assertThat(text(response)).isEqualTo("Ссылка не найдена.");
-        verify(chatStateService).clearState(CHAT_ID);
+        verify(chatStateService, never()).clearState(CHAT_ID);
     }
 
     private String text(SendMessage message) {

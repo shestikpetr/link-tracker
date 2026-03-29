@@ -6,14 +6,17 @@ import backend.academy.linktracker.bot.state.ChatStateService;
 import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.SendMessage;
 import lombok.RequiredArgsConstructor;
-import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 @Component
-@Order(4)
 @RequiredArgsConstructor
 public class UntrackCommand implements Command {
     private final ChatStateService chatStateService;
+
+    @Override
+    public int order() {
+        return 4;
+    }
 
     @Override
     public String command() {

@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -56,7 +57,7 @@ class TrackTagsStateHandlerTest {
     }
 
     @Test
-    void already_tracked_shows_error_and_clears_state() {
+    void already_tracked_shows_error_and_preserves_state() {
         URI url = URI.create("https://github.com/foo/bar");
         when(chatStateService.getPendingUrl(CHAT_ID)).thenReturn(url);
         doThrow(new LinkAlreadyTrackedException()).when(linkTrackingService).addLink(anyLong(), any(), any());
@@ -64,11 +65,11 @@ class TrackTagsStateHandlerTest {
         SendMessage response = handler.handleInput(buildUpdate("тег1"));
 
         assertThat(text(response)).isEqualTo("Ссылка уже отслеживается.");
-        verify(chatStateService).clearState(CHAT_ID);
+        verify(chatStateService, never()).clearState(CHAT_ID);
     }
 
     @Test
-    void unsupported_link_shows_error_and_clears_state() {
+    void unsupported_link_shows_error_and_preserves_state() {
         URI url = URI.create("https://github.com/foo/bar");
         when(chatStateService.getPendingUrl(CHAT_ID)).thenReturn(url);
         doThrow(new UnsupportedLinkException()).when(linkTrackingService).addLink(anyLong(), any(), any());
@@ -76,7 +77,7 @@ class TrackTagsStateHandlerTest {
         SendMessage response = handler.handleInput(buildUpdate("тег1"));
 
         assertThat(text(response)).contains("не поддерживается");
-        verify(chatStateService).clearState(CHAT_ID);
+        verify(chatStateService, never()).clearState(CHAT_ID);
     }
 
     private String text(SendMessage message) {

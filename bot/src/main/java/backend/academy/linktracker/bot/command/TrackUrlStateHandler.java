@@ -8,31 +8,32 @@ import backend.academy.linktracker.bot.state.ChatStateService;
 import backend.academy.linktracker.bot.utils.UrlValidator;
 import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.SendMessage;
-import java.util.Set;
+import java.net.URI;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class TrackUrlStateHandler implements StatefulCommand {
+public class TrackUrlStateHandler implements StateHandler {
     private final ChatStateService chatStateService;
     private final UrlValidator urlValidator;
 
     @Override
-    public Set<ChatState> handledStates() {
-        return Set.of(WAITING_TRACK_URL);
+    public ChatState handledState() {
+        return WAITING_TRACK_URL;
     }
 
     @Override
     public SendMessage handleInput(Update update) {
         long chatId = update.message().chat().id();
-        String text = update.message().text().trim();
+        Optional<URI> url = urlValidator.parse(update.message().text());
 
-        if (!urlValidator.isValid(text)) {
+        if (url.isEmpty()) {
             return new SendMessage(chatId, "Некорректная ссылка. Введите ссылку ещё раз:");
         }
 
-        chatStateService.setPendingUrl(chatId, urlValidator.parse(text));
+        chatStateService.setPendingUrl(chatId, url.orElseThrow());
         chatStateService.setState(chatId, WAITING_TRACK_TAGS);
         return new SendMessage(chatId, "Введите теги:");
     }

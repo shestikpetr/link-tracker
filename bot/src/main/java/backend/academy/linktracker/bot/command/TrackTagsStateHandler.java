@@ -12,20 +12,19 @@ import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.SendMessage;
 import java.net.URI;
 import java.util.List;
-import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class TrackTagsStateHandler implements StatefulCommand {
+public class TrackTagsStateHandler implements StateHandler {
     private final LinkTrackingService linkTrackingService;
     private final ChatStateService chatStateService;
     private final TagParser tagParser;
 
     @Override
-    public Set<ChatState> handledStates() {
-        return Set.of(WAITING_TRACK_TAGS);
+    public ChatState handledState() {
+        return WAITING_TRACK_TAGS;
     }
 
     @Override
@@ -33,11 +32,11 @@ public class TrackTagsStateHandler implements StatefulCommand {
         long chatId = update.message().chat().id();
         URI url = chatStateService.getPendingUrl(chatId);
         List<String> tags = tagParser.parseTags(update.message().text());
-        chatStateService.clearState(chatId);
-
         String text;
+
         try {
             linkTrackingService.addLink(chatId, url, tags);
+            chatStateService.clearState(chatId);
             text = "Ссылка добавлена.";
         } catch (LinkAlreadyTrackedException | UnsupportedLinkException e) {
             text = e.getMessage();
