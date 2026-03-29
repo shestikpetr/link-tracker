@@ -8,10 +8,12 @@ import static org.mockito.Mockito.when;
 import backend.academy.linktracker.scrapper.dto.LinkResponse;
 import backend.academy.linktracker.scrapper.exceptions.UnsupportedLinkException;
 import backend.academy.linktracker.scrapper.model.TrackedLink;
+import backend.academy.linktracker.scrapper.repository.ChatRepository;
 import backend.academy.linktracker.scrapper.repository.LinkRepository;
 import java.net.URI;
 import java.time.Instant;
 import java.util.List;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -28,10 +30,18 @@ class LinkServiceTest {
     LinkRepository linkRepository;
 
     @Mock
+    ChatRepository chatRepository;
+
+    @Mock
     LinkChecker linkChecker;
 
     @InjectMocks
     LinkService linkService;
+
+    @BeforeEach
+    void setUp() {
+        when(chatRepository.existsChat(1L)).thenReturn(true);
+    }
 
     @Test
     void getLinks_returns_all_links_when_no_tag() {

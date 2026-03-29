@@ -1,6 +1,5 @@
 package backend.academy.linktracker.scrapper.repository;
 
-import backend.academy.linktracker.scrapper.exceptions.ChatNotFoundException;
 import backend.academy.linktracker.scrapper.exceptions.LinkAlreadyExistsException;
 import backend.academy.linktracker.scrapper.exceptions.LinkNotFoundException;
 import backend.academy.linktracker.scrapper.model.ChatLink;
@@ -8,19 +7,17 @@ import backend.academy.linktracker.scrapper.model.TrackedLink;
 import java.net.URI;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
-@RequiredArgsConstructor
 @Repository
 public class InMemoryLinkRepository implements LinkRepository {
     private final Map<Long, Map<Long, TrackedLink>> storage = new ConcurrentHashMap<>();
-    private final ChatRepository chatRepository;
     private final AtomicLong idGen = new AtomicLong(1);
 
     @Override
@@ -49,8 +46,8 @@ public class InMemoryLinkRepository implements LinkRepository {
     }
 
     @Override
-    public List<TrackedLink> findByChat(Long chatId) {
-        return List.copyOf(getChatLinks(chatId).values());
+    public Collection<TrackedLink> findByChat(Long chatId) {
+        return getChatLinks(chatId).values();
     }
 
     @Override
@@ -80,19 +77,11 @@ public class InMemoryLinkRepository implements LinkRepository {
     }
 
     private Map<Long, TrackedLink> getOrCreateChatLinks(Long chatId) {
-        requireChatExists(chatId);
         return storage.computeIfAbsent(chatId, _ -> new ConcurrentHashMap<>());
     }
 
     private Map<Long, TrackedLink> getChatLinks(Long chatId) {
-        requireChatExists(chatId);
         Map<Long, TrackedLink> links = storage.get(chatId);
         return links != null ? links : Map.of();
-    }
-
-    private void requireChatExists(Long chatId) {
-        if (!chatRepository.existsChat(chatId)) {
-            throw new ChatNotFoundException(chatId);
-        }
     }
 }

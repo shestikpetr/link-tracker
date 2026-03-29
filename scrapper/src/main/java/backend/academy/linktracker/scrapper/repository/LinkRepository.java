@@ -4,6 +4,7 @@ import backend.academy.linktracker.scrapper.model.ChatLink;
 import backend.academy.linktracker.scrapper.model.TrackedLink;
 import java.net.URI;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -12,7 +13,7 @@ public interface LinkRepository {
 
     TrackedLink removeLink(Long chatId, URI url);
 
-    List<TrackedLink> findByChat(Long chatId);
+    Collection<TrackedLink> findByChat(Long chatId);
 
     Map<URI, List<ChatLink>> findAllGroupedByUrl();
 
