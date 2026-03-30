@@ -2,10 +2,10 @@ package backend.academy.linktracker.bot.listener;
 
 import backend.academy.linktracker.bot.client.BotClient;
 import backend.academy.linktracker.bot.command.StateHandler;
-import backend.academy.linktracker.bot.state.ChatState;
+import backend.academy.linktracker.bot.state.ChatSession;
 import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.SendMessage;
-import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -15,21 +15,18 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 public class StateInputDispatcher {
-    private final Map<ChatState, StateHandler> stateHandlers;
+    private final Map<Class<? extends ChatSession>, StateHandler> sessionHandlers;
     private final BotClient botClient;
 
     public StateInputDispatcher(List<StateHandler> stateHandlers, BotClient botClient) {
         this.botClient = botClient;
-        this.stateHandlers = stateHandlers.stream()
+        this.sessionHandlers = stateHandlers.stream()
                 .collect(Collectors.toMap(
-                        StateHandler::handledState,
-                        handler -> handler,
-                        (_, b) -> b,
-                        () -> new EnumMap<>(ChatState.class)));
+                        StateHandler::handledSessionType, handler -> handler, (_, b) -> b, HashMap::new));
     }
 
-    public void dispatch(ChatState state, Update update) {
-        StateHandler cmd = stateHandlers.get(state);
+    public void dispatch(ChatSession session, Update update) {
+        StateHandler cmd = sessionHandlers.get(session.getClass());
 
         if (cmd == null) {
             return;
@@ -43,7 +40,7 @@ public class StateInputDispatcher {
         } catch (Exception e) {
             log.atError()
                     .setMessage("Ошибка при обработке состояния")
-                    .addKeyValue("state", state)
+                    .addKeyValue("session", session)
                     .addKeyValue("chatId", chatId)
                     .setCause(e)
                     .log();

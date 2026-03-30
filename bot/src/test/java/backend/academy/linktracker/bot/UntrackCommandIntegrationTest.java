@@ -54,7 +54,7 @@ class UntrackCommandIntegrationTest {
     @AfterEach
     void tearDown() {
         telegramBot.removeGetUpdatesListener();
-        chatStateService.clearState(CHAT_ID);
+        chatStateService.clearSession(CHAT_ID);
         resetAllRequests();
     }
 

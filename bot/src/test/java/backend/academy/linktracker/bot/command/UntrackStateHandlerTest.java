@@ -48,7 +48,7 @@ class UntrackStateHandlerTest {
 
         assertThat(text(response)).isEqualTo("Ссылка удалена.");
         verify(linkTrackingService).removeLink(CHAT_ID, URI.create(URL));
-        verify(chatStateService).clearState(CHAT_ID);
+        verify(chatStateService).clearSession(CHAT_ID);
     }
 
     @Test
@@ -60,7 +60,7 @@ class UntrackStateHandlerTest {
         SendMessage response = handler.handleInput(buildUpdate());
 
         assertThat(text(response)).isEqualTo("Ссылка не найдена");
-        verify(chatStateService, never()).clearState(CHAT_ID);
+        verify(chatStateService, never()).clearSession(CHAT_ID);
     }
 
     private String text(SendMessage message) {

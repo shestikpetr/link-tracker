@@ -1,7 +1,6 @@
 package backend.academy.linktracker.bot.command;
 
-import static backend.academy.linktracker.bot.state.ChatState.WAITING_UNTRACK_URL;
-
+import backend.academy.linktracker.bot.state.ChatSession;
 import backend.academy.linktracker.bot.state.ChatStateService;
 import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.SendMessage;
@@ -31,7 +30,7 @@ public class UntrackCommand implements Command {
     @Override
     public SendMessage handle(Update update) {
         long chatId = update.message().chat().id();
-        chatStateService.setState(chatId, WAITING_UNTRACK_URL);
+        chatStateService.setSession(chatId, new ChatSession.Untrack());
         return new SendMessage(chatId, "Введите URL:");
     }
 }

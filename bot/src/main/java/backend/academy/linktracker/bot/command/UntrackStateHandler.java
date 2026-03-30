@@ -1,10 +1,8 @@
 package backend.academy.linktracker.bot.command;
 
-import static backend.academy.linktracker.bot.state.ChatState.WAITING_UNTRACK_URL;
-
 import backend.academy.linktracker.bot.exceptions.LinkNotFoundException;
 import backend.academy.linktracker.bot.service.LinkTrackingService;
-import backend.academy.linktracker.bot.state.ChatState;
+import backend.academy.linktracker.bot.state.ChatSession;
 import backend.academy.linktracker.bot.state.ChatStateService;
 import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.SendMessage;
@@ -19,8 +17,8 @@ public class UntrackStateHandler implements StateHandler {
     private final ChatStateService chatStateService;
 
     @Override
-    public ChatState handledState() {
-        return WAITING_UNTRACK_URL;
+    public Class<? extends ChatSession> handledSessionType() {
+        return ChatSession.Untrack.class;
     }
 
     @Override
@@ -31,7 +29,7 @@ public class UntrackStateHandler implements StateHandler {
         try {
             linkTrackingService.removeLink(
                     chatId, URI.create(update.message().text().trim()));
-            chatStateService.clearState(chatId);
+            chatStateService.clearSession(chatId);
             text = "Ссылка удалена.";
         } catch (LinkNotFoundException e) {
             text = e.getMessage();

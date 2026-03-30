@@ -1,9 +1,6 @@
 package backend.academy.linktracker.bot.command;
 
-import static backend.academy.linktracker.bot.state.ChatState.WAITING_TRACK_TAGS;
-import static backend.academy.linktracker.bot.state.ChatState.WAITING_TRACK_URL;
-
-import backend.academy.linktracker.bot.state.ChatState;
+import backend.academy.linktracker.bot.state.ChatSession;
 import backend.academy.linktracker.bot.state.ChatStateService;
 import backend.academy.linktracker.bot.utils.UrlValidator;
 import com.pengrad.telegrambot.model.Update;
@@ -20,8 +17,8 @@ public class TrackUrlStateHandler implements StateHandler {
     private final UrlValidator urlValidator;
 
     @Override
-    public ChatState handledState() {
-        return WAITING_TRACK_URL;
+    public Class<? extends ChatSession> handledSessionType() {
+        return ChatSession.TrackUrl.class;
     }
 
     @Override
@@ -33,8 +30,7 @@ public class TrackUrlStateHandler implements StateHandler {
             return new SendMessage(chatId, "Некорректная ссылка. Введите ссылку ещё раз:");
         }
 
-        chatStateService.setPendingUrl(chatId, url.orElseThrow());
-        chatStateService.setState(chatId, WAITING_TRACK_TAGS);
+        chatStateService.setSession(chatId, new ChatSession.TrackTags(url.orElseThrow()));
         return new SendMessage(chatId, "Введите теги:");
     }
 }
