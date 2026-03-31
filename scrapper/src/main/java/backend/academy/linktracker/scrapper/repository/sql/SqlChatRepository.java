@@ -1,7 +1,5 @@
 package backend.academy.linktracker.scrapper.repository.sql;
 
-import backend.academy.linktracker.scrapper.exceptions.ChatAlreadyExistsException;
-import backend.academy.linktracker.scrapper.exceptions.ChatNotFoundException;
 import backend.academy.linktracker.scrapper.repository.ChatRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -16,27 +14,25 @@ public class SqlChatRepository implements ChatRepository {
     private final JdbcClient jdbcClient;
 
     @Override
-    public void registerChat(Long chatId) {
+    public boolean registerChat(Long chatId) {
         try {
             jdbcClient
                     .sql("INSERT INTO chats (id) VALUES (:chatId)")
                     .param("chatId", chatId)
                     .update();
+            return true;
         } catch (DuplicateKeyException e) {
-            throw new ChatAlreadyExistsException(chatId);
+            return false;
         }
     }
 
     @Override
-    public void deleteChat(Long chatId) {
+    public boolean deleteChat(Long chatId) {
         int rows = jdbcClient
                 .sql("DELETE FROM chats WHERE id = :chatId")
                 .param("chatId", chatId)
                 .update();
-
-        if (rows == 0) {
-            throw new ChatNotFoundException(chatId);
-        }
+        return rows > 0;
     }
 
     @Override

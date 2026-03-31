@@ -1,13 +1,8 @@
 package backend.academy.linktracker.scrapper.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import backend.academy.linktracker.scrapper.TestcontainersConfiguration;
-import backend.academy.linktracker.scrapper.exceptions.ChatAlreadyExistsException;
-import backend.academy.linktracker.scrapper.exceptions.ChatNotFoundException;
-import backend.academy.linktracker.scrapper.exceptions.LinkAlreadyExistsException;
-import backend.academy.linktracker.scrapper.exceptions.LinkNotFoundException;
 import backend.academy.linktracker.scrapper.model.ChatLink;
 import backend.academy.linktracker.scrapper.model.TrackedLink;
 import java.net.URI;
@@ -44,10 +39,10 @@ abstract class AbstractRepositoryTest {
     }
 
     @Test
-    void registerChat_duplicate_throws() {
+    void registerChat_duplicate_returns_false() {
         chatRepository.registerChat(1L);
 
-        assertThatThrownBy(() -> chatRepository.registerChat(1L)).isInstanceOf(ChatAlreadyExistsException.class);
+        assertThat(chatRepository.registerChat(1L)).isFalse();
     }
 
     @Test
@@ -59,8 +54,8 @@ abstract class AbstractRepositoryTest {
     }
 
     @Test
-    void deleteChat_nonexistent_throws() {
-        assertThatThrownBy(() -> chatRepository.deleteChat(999L)).isInstanceOf(ChatNotFoundException.class);
+    void deleteChat_nonexistent_returns_false() {
+        assertThat(chatRepository.deleteChat(999L)).isFalse();
     }
 
     @Test
@@ -72,7 +67,9 @@ abstract class AbstractRepositoryTest {
     void addLink_success() {
         chatRepository.registerChat(1L);
 
-        TrackedLink link = linkRepository.addLink(1L, GITHUB_URL, List.of("tag1"), List.of());
+        TrackedLink link = linkRepository
+                .addLink(1L, GITHUB_URL, List.of("tag1"), List.of())
+                .orElseThrow();
 
         assertThat(link.url()).isEqualTo(GITHUB_URL);
         assertThat(link.tags()).containsExactly("tag1");
@@ -80,18 +77,11 @@ abstract class AbstractRepositoryTest {
     }
 
     @Test
-    void addLink_duplicate_throws() {
+    void addLink_duplicate_returns_empty() {
         chatRepository.registerChat(1L);
         linkRepository.addLink(1L, GITHUB_URL, List.of(), List.of());
 
-        assertThatThrownBy(() -> linkRepository.addLink(1L, GITHUB_URL, List.of(), List.of()))
-                .isInstanceOf(LinkAlreadyExistsException.class);
-    }
-
-    @Test
-    void addLink_to_nonexistent_chat_throws() {
-        assertThatThrownBy(() -> linkRepository.addLink(999L, GITHUB_URL, List.of(), List.of()))
-                .isInstanceOf(ChatNotFoundException.class);
+        assertThat(linkRepository.addLink(1L, GITHUB_URL, List.of(), List.of())).isEmpty();
     }
 
     @Test
@@ -99,17 +89,17 @@ abstract class AbstractRepositoryTest {
         chatRepository.registerChat(1L);
         linkRepository.addLink(1L, GITHUB_URL, List.of("tag1"), List.of());
 
-        TrackedLink removed = linkRepository.removeLink(1L, GITHUB_URL);
+        TrackedLink removed = linkRepository.removeLink(1L, GITHUB_URL).orElseThrow();
 
         assertThat(removed.url()).isEqualTo(GITHUB_URL);
         assertThat(linkRepository.findByChat(1L)).isEmpty();
     }
 
     @Test
-    void removeLink_nonexistent_throws() {
+    void removeLink_nonexistent_returns_empty() {
         chatRepository.registerChat(1L);
 
-        assertThatThrownBy(() -> linkRepository.removeLink(1L, GITHUB_URL)).isInstanceOf(LinkNotFoundException.class);
+        assertThat(linkRepository.removeLink(1L, GITHUB_URL)).isEmpty();
     }
 
     @Test
@@ -125,8 +115,8 @@ abstract class AbstractRepositoryTest {
     }
 
     @Test
-    void findByChat_nonexistent_chat_throws() {
-        assertThatThrownBy(() -> linkRepository.findByChat(999L)).isInstanceOf(ChatNotFoundException.class);
+    void findByChat_nonexistent_chat_returns_empty() {
+        assertThat(linkRepository.findByChat(999L)).isEmpty();
     }
 
     @Test
@@ -163,7 +153,8 @@ abstract class AbstractRepositoryTest {
     @Test
     void updateLastChecked_updates_timestamp() {
         chatRepository.registerChat(1L);
-        TrackedLink link = linkRepository.addLink(1L, GITHUB_URL, List.of(), List.of());
+        TrackedLink link =
+                linkRepository.addLink(1L, GITHUB_URL, List.of(), List.of()).orElseThrow();
 
         Instant newTime = Instant.parse("2025-01-01T00:00:00Z");
         linkRepository.updateLastChecked(link.id(), newTime);

@@ -38,8 +38,8 @@ public class ChatLinkEntity {
     @JoinColumn(name = "link_id")
     private LinkEntity link;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private Instant createdAt = Instant.now();
+    @Column(name = "created_at", nullable = false, updatable = false, insertable = false)
+    private Instant createdAt;
 
     @Column(name = "filters", columnDefinition = "TEXT[]")
     @JdbcTypeCode(SqlTypes.ARRAY)

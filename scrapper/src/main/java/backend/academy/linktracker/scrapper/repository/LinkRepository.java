@@ -6,11 +6,12 @@ import java.net.URI;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 public interface LinkRepository {
-    TrackedLink addLink(Long chatId, URI url, List<String> tags, List<String> filters);
+    Optional<TrackedLink> addLink(Long chatId, URI url, List<String> tags, List<String> filters);
 
-    TrackedLink removeLink(Long chatId, URI url);
+    Optional<TrackedLink> removeLink(Long chatId, URI url);
 
     List<TrackedLink> findByChat(Long chatId);
 

@@ -7,6 +7,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Instant;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -16,6 +17,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
+@EqualsAndHashCode(of = "id")
 public class LinkEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -24,6 +26,6 @@ public class LinkEntity {
     @Column(nullable = false, unique = true)
     private String url;
 
-    @Column(name = "last_checked_at", nullable = false)
-    private Instant lastCheckedAt = Instant.now();
+    @Column(name = "last_checked_at", nullable = false, insertable = false)
+    private Instant lastCheckedAt;
 }

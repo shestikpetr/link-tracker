@@ -1,8 +1,12 @@
 package backend.academy.linktracker.scrapper.service;
 
 import backend.academy.linktracker.scrapper.dto.LinkResponse;
+import backend.academy.linktracker.scrapper.exceptions.ChatNotFoundException;
+import backend.academy.linktracker.scrapper.exceptions.LinkAlreadyExistsException;
+import backend.academy.linktracker.scrapper.exceptions.LinkNotFoundException;
 import backend.academy.linktracker.scrapper.exceptions.UnsupportedLinkException;
 import backend.academy.linktracker.scrapper.model.TrackedLink;
+import backend.academy.linktracker.scrapper.repository.ChatRepository;
 import backend.academy.linktracker.scrapper.repository.LinkRepository;
 import java.net.URI;
 import java.util.List;
@@ -13,9 +17,11 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class LinkService {
     private final LinkRepository linkRepository;
+    private final ChatRepository chatRepository;
     private final LinkChecker linkChecker;
 
     public List<LinkResponse> getLinks(Long chatId, List<String> tags) {
+        requireChatExists(chatId);
         return linkRepository.findByChat(chatId).stream()
                 .filter(link ->
                         tags == null || tags.isEmpty() || link.tags().stream().anyMatch(tags::contains))
@@ -24,14 +30,28 @@ public class LinkService {
     }
 
     public LinkResponse addLink(Long chatId, URI url, List<String> tags, List<String> filters) {
+        requireChatExists(chatId);
         if (!linkChecker.supports(url)) {
             throw new UnsupportedLinkException(url);
         }
-        return toResponse(linkRepository.addLink(chatId, url, tags, filters));
+        return linkRepository
+                .addLink(chatId, url, tags, filters)
+                .map(this::toResponse)
+                .orElseThrow(() -> new LinkAlreadyExistsException(url));
     }
 
     public LinkResponse removeLink(Long chatId, URI url) {
-        return toResponse(linkRepository.removeLink(chatId, url));
+        requireChatExists(chatId);
+        return linkRepository
+                .removeLink(chatId, url)
+                .map(this::toResponse)
+                .orElseThrow(() -> new LinkNotFoundException(url));
+    }
+
+    private void requireChatExists(Long chatId) {
+        if (!chatRepository.chatExists(chatId)) {
+            throw new ChatNotFoundException(chatId);
+        }
     }
 
     private LinkResponse toResponse(TrackedLink link) {

@@ -1,8 +1,6 @@
 package backend.academy.linktracker.scrapper.repository.orm;
 
 import backend.academy.linktracker.scrapper.entity.ChatEntity;
-import backend.academy.linktracker.scrapper.exceptions.ChatAlreadyExistsException;
-import backend.academy.linktracker.scrapper.exceptions.ChatNotFoundException;
 import backend.academy.linktracker.scrapper.repository.ChatRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -15,23 +13,25 @@ public class OrmChatRepository implements ChatRepository {
     private final JpaChatRepository jpaChatRepository;
 
     @Override
-    public void registerChat(Long chatId) {
+    public boolean registerChat(Long chatId) {
         if (jpaChatRepository.existsById(chatId)) {
-            throw new ChatAlreadyExistsException(chatId);
+            return false;
         }
 
         ChatEntity chat = new ChatEntity();
         chat.setId(chatId);
         jpaChatRepository.save(chat);
+        return true;
     }
 
     @Override
-    public void deleteChat(Long chatId) {
+    public boolean deleteChat(Long chatId) {
         if (!jpaChatRepository.existsById(chatId)) {
-            throw new ChatNotFoundException(chatId);
+            return false;
         }
 
         jpaChatRepository.deleteById(chatId);
+        return true;
     }
 
     @Override

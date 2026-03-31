@@ -1,11 +1,7 @@
 package backend.academy.linktracker.scrapper.repository.sql;
 
-import backend.academy.linktracker.scrapper.exceptions.ChatNotFoundException;
-import backend.academy.linktracker.scrapper.exceptions.LinkAlreadyExistsException;
-import backend.academy.linktracker.scrapper.exceptions.LinkNotFoundException;
 import backend.academy.linktracker.scrapper.model.ChatLink;
 import backend.academy.linktracker.scrapper.model.TrackedLink;
-import backend.academy.linktracker.scrapper.repository.ChatRepository;
 import backend.academy.linktracker.scrapper.repository.LinkRepository;
 import java.net.URI;
 import java.time.Instant;
@@ -16,6 +12,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -30,16 +27,11 @@ import org.springframework.transaction.annotation.Transactional;
 @ConditionalOnProperty(name = "app.database.access-type", havingValue = "SQL")
 public class SqlLinkRepository implements LinkRepository {
     private final JdbcClient jdbcClient;
-    private final ChatRepository chatRepository;
 
     private record LinkRow(Long chatId, Long id, String url, Instant lastCheckedAt, String[] filters, String tagName) {}
 
     @Override
-    public TrackedLink addLink(Long chatId, URI url, List<String> tags, List<String> filters) {
-        if (!chatRepository.chatExists(chatId)) {
-            throw new ChatNotFoundException(chatId);
-        }
-
+    public Optional<TrackedLink> addLink(Long chatId, URI url, List<String> tags, List<String> filters) {
         var linkRow = jdbcClient
                 .sql("""
                     INSERT INTO links (url) VALUES (:url)
@@ -62,7 +54,7 @@ public class SqlLinkRepository implements LinkRepository {
                     .param("filters", filters.toArray(String[]::new))
                     .update();
         } catch (DuplicateKeyException e) {
-            throw new LinkAlreadyExistsException(url);
+            return Optional.empty();
         }
 
         for (String tag : tags) {
@@ -85,25 +77,24 @@ public class SqlLinkRepository implements LinkRepository {
                     .update();
         }
 
-        return new TrackedLink(linkId, url, tags, filters, lastCheckedAt);
+        return Optional.of(new TrackedLink(linkId, url, tags, filters, lastCheckedAt));
     }
 
     @Override
-    public TrackedLink removeLink(Long chatId, URI url) {
-        if (!chatRepository.chatExists(chatId)) {
-            throw new ChatNotFoundException(chatId);
-        }
-
+    public Optional<TrackedLink> removeLink(Long chatId, URI url) {
         var linkRow = jdbcClient
                 .sql("SELECT id, last_checked_at FROM links WHERE url = :url")
                 .param("url", url.toString())
                 .query((rs, _) -> Map.entry(
                         rs.getLong("id"), rs.getTimestamp("last_checked_at").toInstant()))
-                .optional()
-                .orElseThrow(() -> new LinkNotFoundException(url));
+                .optional();
 
-        Long linkId = linkRow.getKey();
-        Instant lastCheckedAt = linkRow.getValue();
+        if (linkRow.isEmpty()) {
+            return Optional.empty();
+        }
+
+        Long linkId = linkRow.orElseThrow().getKey();
+        Instant lastCheckedAt = linkRow.orElseThrow().getValue();
 
         List<String> tags = jdbcClient
                 .sql("""
@@ -116,7 +107,7 @@ public class SqlLinkRepository implements LinkRepository {
                 .query(String.class)
                 .list();
 
-        List<String> filters = List.of(jdbcClient
+        var filtersResult = jdbcClient
                 .sql("""
                     SELECT filters FROM chat_links
                     WHERE chat_id = :chatId AND link_id = :linkId
@@ -124,32 +115,32 @@ public class SqlLinkRepository implements LinkRepository {
                 .param("chatId", chatId)
                 .param("linkId", linkId)
                 .query((rs, _) -> (String[]) rs.getArray("filters").getArray())
-                .single());
+                .optional();
 
-        int rows = jdbcClient
+        if (filtersResult.isEmpty()) {
+            return Optional.empty();
+        }
+
+        List<String> linkFilters = List.of(filtersResult.orElseThrow());
+
+        jdbcClient
                 .sql("DELETE FROM chat_links WHERE chat_id = :chatId AND link_id = :linkId")
                 .param("chatId", chatId)
                 .param("linkId", linkId)
                 .update();
-        if (rows == 0) throw new LinkNotFoundException(url);
 
         jdbcClient.sql("""
             DELETE FROM links
             WHERE id = :linkId
-            AND NOT EXISTS (SELECT 1 FROM chat_links
-            WHERE link_id = :linkId)
+            AND NOT EXISTS (SELECT 1 FROM chat_links WHERE link_id = :linkId)
             """).param("linkId", linkId).update();
 
-        return new TrackedLink(linkId, url, tags, filters, lastCheckedAt);
+        return Optional.of(new TrackedLink(linkId, url, tags, linkFilters, lastCheckedAt));
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<TrackedLink> findByChat(Long chatId) {
-        if (!chatRepository.chatExists(chatId)) {
-            throw new ChatNotFoundException(chatId);
-        }
-
         var rows = jdbcClient
                 .sql("""
                     SELECT l.id, l.url, l.last_checked_at, cl.filters, t.name AS tag_name
