@@ -1,22 +1,41 @@
 package backend.academy.linktracker.bot.listener;
 
-import backend.academy.linktracker.bot.client.BotClient;
-import backend.academy.linktracker.bot.command.Command;
-import backend.academy.linktracker.bot.command.CommandRegistry;
+import backend.academy.linktracker.bot.state.ChatStateService;
 import com.pengrad.telegrambot.model.Update;
-import com.pengrad.telegrambot.request.SendMessage;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class MessageHandler {
-    private final CommandRegistry commandRegistry;
-    private final BotClient botClient;
+    private final CommandDispatcher commandDispatcher;
+    private final StateInputDispatcher stateInputDispatcher;
+    private final ChatStateService chatStateService;
 
-    public MessageHandler(CommandRegistry commandRegistry, BotClient botClient) {
-        this.commandRegistry = commandRegistry;
-        this.botClient = botClient;
+    public void handle(Update update) {
+        if (!isValid(update)) return;
+
+        long chatId = update.message().chat().id();
+        String text = update.message().text();
+
+        log.atInfo()
+                .setMessage("Получено сообщение")
+                .addKeyValue("chatId", chatId)
+                .addKeyValue("text", text)
+                .log();
+
+        if (text.startsWith("/")) {
+            chatStateService.clearSession(chatId);
+            commandDispatcher.dispatch(parse(text), update);
+        } else {
+            chatStateService
+                    .getSession(chatId)
+                    .ifPresentOrElse(
+                            session -> stateInputDispatcher.dispatch(session, update),
+                            () -> commandDispatcher.sendUnknownCommand(update));
+        }
     }
 
     private boolean isValid(Update update) {
@@ -27,28 +46,5 @@ public class MessageHandler {
 
     private String parse(String text) {
         return text.trim().split("\\s+")[0].toLowerCase();
-    }
-
-    private void executeCommand(Command cmd, Update update) {
-        botClient.execute(cmd.handle(update));
-    }
-
-    private void sendUnknownCommand(Update update) {
-        long chatId = update.message().chat().id();
-        botClient.execute(new SendMessage(
-                chatId, "Неизвестная команда. Воспользуйтесь /help, чтобы посмотреть список доступных команд."));
-    }
-
-    public void handle(Update update) {
-        if (!isValid(update)) return;
-
-        log.info(
-                "Получено сообщение от chatId={}: {}",
-                update.message().chat().id(),
-                update.message().text());
-
-        commandRegistry
-                .find(parse(update.message().text()))
-                .ifPresentOrElse(cmd -> executeCommand(cmd, update), () -> sendUnknownCommand(update));
     }
 }

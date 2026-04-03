@@ -2,6 +2,7 @@ package backend.academy.linktracker.bot.command;
 
 import com.pengrad.telegrambot.model.BotCommand;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,8 +15,9 @@ public class CommandRegistry {
     private final Map<String, Command> commands;
 
     public CommandRegistry(List<Command> commands) {
-        this.commands =
-                commands.stream().collect(Collectors.toMap(Command::command, c -> c, (a, b) -> a, LinkedHashMap::new));
+        this.commands = commands.stream()
+                .sorted(Comparator.comparingInt(Command::order))
+                .collect(Collectors.toMap(Command::command, c -> c, (a, _) -> a, LinkedHashMap::new));
     }
 
     public Optional<Command> find(String text) {

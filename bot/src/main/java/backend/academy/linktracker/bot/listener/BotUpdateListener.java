@@ -5,17 +5,14 @@ import com.pengrad.telegrambot.UpdatesListener;
 import com.pengrad.telegrambot.model.Update;
 import jakarta.annotation.PostConstruct;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 public class BotUpdateListener implements UpdatesListener {
     private final TelegramBot telegramBot;
     private final MessageHandler messageHandler;
-
-    public BotUpdateListener(TelegramBot telegramBot, MessageHandler messageHandler) {
-        this.telegramBot = telegramBot;
-        this.messageHandler = messageHandler;
-    }
 
     @Override
     public int process(List<Update> list) {
