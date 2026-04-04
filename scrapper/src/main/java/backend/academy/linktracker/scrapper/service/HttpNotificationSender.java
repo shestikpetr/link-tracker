@@ -11,15 +11,16 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class LinkNotifier {
+public class HttpNotificationSender implements NotificationSender {
     private final BotClient botClient;
 
-    public void notify(URI url, List<Long> chatIds) {
+    @Override
+    public void send(URI url, String description, List<Long> chatIds) {
         log.atInfo()
                 .setMessage("Отправка обновления")
                 .addKeyValue("url", url)
                 .addKeyValue("chatIds", chatIds)
                 .log();
-        botClient.sendUpdate(new LinkUpdate(null, url, "Обновление", chatIds));
+        botClient.sendUpdate(new LinkUpdate(null, url, description, chatIds));
     }
 }

@@ -1,8 +1,10 @@
 package backend.academy.linktracker.scrapper.service;
 
 import backend.academy.linktracker.scrapper.model.ChatLink;
+import backend.academy.linktracker.scrapper.model.LinkUpdateInfo;
 import backend.academy.linktracker.scrapper.repository.LinkRepository;
 import java.net.URI;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -15,24 +17,42 @@ import org.springframework.stereotype.Service;
 public class LinkUpdateService {
     private final LinkRepository linkRepository;
     private final LinkChecker linkChecker;
-    private final LinkNotifier linkNotifier;
+    private final NotificationSender notificationSender;
 
     public void checkAndNotify() {
         for (var entry : linkRepository.findAllGroupedByUrl().entrySet()) {
             URI url = entry.getKey();
             try {
-                linkChecker.getLastActivity(url).ifPresent(lastActivity -> {
-                    List<Long> chatIds = new ArrayList<>();
-                    for (ChatLink chatLink : entry.getValue()) {
-                        if (lastActivity.isAfter(chatLink.link().lastCheckedAt())) {
-                            chatIds.add(chatLink.chatId());
-                            linkRepository.updateLastChecked(chatLink.link().id(), lastActivity);
-                        }
+                Instant oldestLastChecked = entry.getValue().stream()
+                        .map(cl -> cl.link().lastCheckedAt())
+                        .min(Instant::compareTo)
+                        .orElse(Instant.now());
+
+                List<LinkUpdateInfo> updates = linkChecker.checkUpdates(url, oldestLastChecked);
+                if (updates.isEmpty()) {
+                    continue;
+                }
+
+                Instant latestUpdate = updates.stream()
+                        .map(LinkUpdateInfo::timestamp)
+                        .max(Instant::compareTo)
+                        .orElse(Instant.now());
+
+                List<Long> chatIds = new ArrayList<>();
+                for (ChatLink chatLink : entry.getValue()) {
+                    if (latestUpdate.isAfter(chatLink.link().lastCheckedAt())) {
+                        chatIds.add(chatLink.chatId());
+                        linkRepository.updateLastChecked(chatLink.link().id(), latestUpdate);
                     }
-                    if (!chatIds.isEmpty()) {
-                        linkNotifier.notify(url, chatIds);
-                    }
-                });
+                }
+
+                if (!chatIds.isEmpty()) {
+                    String description = updates.stream()
+                            .map(LinkUpdateInfo::description)
+                            .reduce((a, b) -> a + "\n\n" + b)
+                            .orElse("");
+                    notificationSender.send(url, description, chatIds);
+                }
             } catch (Exception e) {
                 log.atError()
                         .setMessage("Ошибка при проверке ссылки")
