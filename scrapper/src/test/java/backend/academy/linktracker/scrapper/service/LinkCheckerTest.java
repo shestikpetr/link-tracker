@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import backend.academy.linktracker.scrapper.model.LinkUpdateInfo;
 import java.net.URI;
 import java.time.Instant;
 import java.util.List;
@@ -37,19 +38,20 @@ class LinkCheckerTest {
     }
 
     @Test
-    void getLastActivity_returns_activity_when_handler_supports_url() {
-        Instant apiActivity = Instant.now();
+    void checkUpdates_returns_updates_when_handler_supports_url() {
+        Instant lastChecked = Instant.now().minusSeconds(60);
+        var update = new LinkUpdateInfo(Instant.now(), "test update");
         when(githubHandler.supports(GITHUB_URL)).thenReturn(true);
-        when(githubHandler.getLastActivity(GITHUB_URL)).thenReturn(apiActivity);
+        when(githubHandler.checkUpdates(GITHUB_URL, lastChecked)).thenReturn(List.of(update));
 
-        assertThat(linkChecker.getLastActivity(GITHUB_URL)).contains(apiActivity);
+        assertThat(linkChecker.checkUpdates(GITHUB_URL, lastChecked)).containsExactly(update);
     }
 
     @Test
-    void getLastActivity_returns_empty_when_no_handler_supports_url() {
+    void checkUpdates_returns_empty_when_no_handler_supports_url() {
         URI unsupported = URI.create("https://unsupported.com/foo");
         when(githubHandler.supports(unsupported)).thenReturn(false);
 
-        assertThat(linkChecker.getLastActivity(unsupported)).isEmpty();
+        assertThat(linkChecker.checkUpdates(unsupported, Instant.now())).isEmpty();
     }
 }

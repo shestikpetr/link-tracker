@@ -20,4 +20,6 @@ public interface LinkRepository {
     void deleteByChat(Long chatId);
 
     void updateLastChecked(Long linkId, Instant lastCheckedAt);
+
+    Map<URI, List<ChatLink>> findStaleLinksGroupedByUrl(int limit);
 }

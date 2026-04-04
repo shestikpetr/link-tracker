@@ -16,18 +16,26 @@ public interface JpaChatLinkRepository extends JpaRepository<ChatLinkEntity, Cha
 
     @Query("""
         SELECT cl FROM ChatLinkEntity cl
-                JOIN FETCH cl.link
-                        LEFT JOIN FETCH cl.tags
-                                WHERE cl.id.chatId = :chatId
+        JOIN FETCH cl.link
+        LEFT JOIN FETCH cl.tags
+        WHERE cl.id.chatId = :chatId
         """)
     List<ChatLinkEntity> findByIdChatIdWithLinkAndTags(@Param("chatId") Long chatId);
 
     @Query("""
         SELECT cl FROM ChatLinkEntity cl
-                JOIN FETCH cl.link
-                        LEFT JOIN FETCH cl.tags
+        JOIN FETCH cl.link
+        LEFT JOIN FETCH cl.tags
         """)
     List<ChatLinkEntity> findAllWithLinkAndTags();
 
     long countByIdLinkId(Long linkId);
+
+    @Query("""
+        SELECT cl FROM ChatLinkEntity cl
+        JOIN FETCH cl.link l
+        LEFT JOIN FETCH cl.tags
+        WHERE l.id IN :linkIds
+        """)
+    List<ChatLinkEntity> findByLinkIdsWithTags(@Param("linkIds") List<Long> linkIds);
 }

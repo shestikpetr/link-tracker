@@ -80,6 +80,26 @@ public class InMemoryLinkRepository implements LinkRepository {
                                 new TrackedLink(link.id(), link.url(), link.tags(), link.filters(), lastCheckedAt)));
     }
 
+    @Override
+    public Map<URI, List<ChatLink>> findStaleLinksGroupedByUrl(int limit) {
+        Map<URI, List<ChatLink>> all = findAllGroupedByUrl();
+
+        return all.entrySet().stream()
+                .sorted((a, b) -> {
+                    Instant aMin = a.getValue().stream()
+                            .map(cl -> cl.link().lastCheckedAt())
+                            .min(Instant::compareTo)
+                            .orElse(Instant.MAX);
+                    Instant bMin = b.getValue().stream()
+                            .map(cl -> cl.link().lastCheckedAt())
+                            .min(Instant::compareTo)
+                            .orElse(Instant.MAX);
+                    return aMin.compareTo(bMin);
+                })
+                .limit(limit)
+                .collect(LinkedHashMap::new, (m, e) -> m.put(e.getKey(), e.getValue()), Map::putAll);
+    }
+
     private Map<Long, TrackedLink> getOrCreateChatLinks(Long chatId) {
         return storage.computeIfAbsent(chatId, _ -> new ConcurrentHashMap<>());
     }

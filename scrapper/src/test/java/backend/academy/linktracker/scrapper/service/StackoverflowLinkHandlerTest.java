@@ -7,48 +7,27 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import backend.academy.linktracker.scrapper.client.StackoverflowClient;
-import com.github.tomakehurst.wiremock.WireMockServer;
-import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
+import backend.academy.linktracker.scrapper.model.LinkUpdateInfo;
 import java.net.URI;
 import java.time.Instant;
-import org.junit.jupiter.api.AfterEach;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.web.client.RestClient;
-import org.springframework.web.client.support.RestClientAdapter;
-import org.springframework.web.service.invoker.HttpServiceProxyFactory;
 
-class StackoverflowLinkHandlerTest {
+class StackoverflowLinkHandlerTest extends AbstractWireMockTest {
 
-    WireMockServer wiremock;
+    static final URI SO_URL = URI.create("https://stackoverflow.com/questions/12345");
+
     StackoverflowLinkHandler handler;
 
     @BeforeEach
     void setUp() {
-        wiremock = new WireMockServer(WireMockConfiguration.options().dynamicPort());
-        wiremock.start();
-
-        var restClient = RestClient.builder()
-                .baseUrl("http://localhost:" + wiremock.port())
-                .build();
-        var factory = HttpServiceProxyFactory.builderFor(RestClientAdapter.create(restClient))
-                .build();
-        StackoverflowClient client = factory.createClient(StackoverflowClient.class);
-
-        handler = new StackoverflowLinkHandler(client);
-    }
-
-    @AfterEach
-    void tearDown() {
-        wiremock.stop();
+        handler = new StackoverflowLinkHandler(createClient(StackoverflowClient.class));
     }
 
     @Test
     void supports_returns_true_for_stackoverflow_url() {
-        assertThat(handler.supports(URI.create("https://stackoverflow.com/questions/12345")))
-                .isTrue();
+        assertThat(handler.supports(SO_URL)).isTrue();
     }
 
     @Test
@@ -74,40 +53,149 @@ class StackoverflowLinkHandlerTest {
     }
 
     @Test
-    void getLastActivity_returns_last_activity_date_from_api() {
-        wiremock.stubFor(get(urlPathEqualTo("/2.3/questions/12345"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                        .withBody("""
-                                {"items": [{"last_activity_date": 1773651521}]}
-                                """)));
+    void checkUpdates_returns_new_answer() {
+        Instant lastChecked = Instant.ofEpochSecond(1700000000);
 
-        Instant result = handler.getLastActivity(URI.create("https://stackoverflow.com/questions/12345"));
+        stubQuestion("How to parse JSON?");
+        stubAnswers("""
+                {"items": [
+                  {
+                    "owner": {"display_name": "alice"},
+                    "creation_date": 1700001000,
+                    "body": "Use Jackson library for parsing"
+                  }
+                ]}
+                """);
+        stubComments("""
+                {"items": []}
+                """);
 
-        assertThat(result).isEqualTo(Instant.ofEpochSecond(1773651521));
+        List<LinkUpdateInfo> updates = handler.checkUpdates(SO_URL, lastChecked);
+
+        assertThat(updates).hasSize(1);
+        assertThat(updates.getFirst().description())
+                .contains("Новый ответ", "How to parse JSON?", "alice", "Use Jackson library for parsing");
     }
 
     @Test
-    void getLastActivity_throws_when_items_is_empty() {
-        wiremock.stubFor(get(urlPathEqualTo("/2.3/questions/12345"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                        .withBody("""
-                                {"items": []}
-                                """)));
+    void checkUpdates_returns_new_comment() {
+        Instant lastChecked = Instant.ofEpochSecond(1700000000);
 
-        assertThatThrownBy(() -> handler.getLastActivity(URI.create("https://stackoverflow.com/questions/12345")))
-                .isInstanceOf(Exception.class);
+        stubQuestion("How to parse JSON?");
+        stubAnswers("""
+                {"items": []}
+                """);
+        stubComments("""
+                {"items": [
+                  {
+                    "owner": {"display_name": "bob"},
+                    "creation_date": 1700001000,
+                    "body": "Could you provide more details?"
+                  }
+                ]}
+                """);
+
+        List<LinkUpdateInfo> updates = handler.checkUpdates(SO_URL, lastChecked);
+
+        assertThat(updates).hasSize(1);
+        assertThat(updates.getFirst().description()).contains("Новый комментарий", "bob");
     }
 
     @Test
-    void getLastActivity_throws_on_api_error() {
+    void checkUpdates_truncates_preview_to_200_chars() {
+        Instant lastChecked = Instant.ofEpochSecond(1700000000);
+        String longBody = "B".repeat(300);
+
+        stubQuestion("Test question");
+        stubAnswers("""
+                {"items": [
+                  {
+                    "owner": {"display_name": "alice"},
+                    "creation_date": 1700001000,
+                    "body": "%s"
+                  }
+                ]}
+                """.formatted(longBody));
+        stubComments("""
+                {"items": []}
+                """);
+
+        List<LinkUpdateInfo> updates = handler.checkUpdates(SO_URL, lastChecked);
+
+        assertThat(updates).hasSize(1);
+        assertThat(updates.getFirst().description()).doesNotContain("B".repeat(201));
+        assertThat(updates.getFirst().description()).contains("B".repeat(200) + "...");
+    }
+
+    @Test
+    void checkUpdates_returns_empty_when_no_new_activity() {
+        stubQuestion("Test question");
+        stubAnswers("""
+                {"items": [
+                  {
+                    "owner": {"display_name": "alice"},
+                    "creation_date": 1700001000,
+                    "body": "old answer"
+                  }
+                ]}
+                """);
+        stubComments("""
+                {"items": []}
+                """);
+
+        List<LinkUpdateInfo> updates = handler.checkUpdates(SO_URL, Instant.ofEpochSecond(1700002000));
+
+        assertThat(updates).isEmpty();
+    }
+
+    @Test
+    void checkUpdates_throws_on_api_error() {
         wiremock.stubFor(get(urlPathEqualTo("/2.3/questions/12345"))
                 .willReturn(aResponse().withStatus(500)));
 
-        assertThatThrownBy(() -> handler.getLastActivity(URI.create("https://stackoverflow.com/questions/12345")))
-                .isInstanceOf(Exception.class);
+        assertThatThrownBy(() -> handler.checkUpdates(SO_URL, Instant.now())).isInstanceOf(Exception.class);
+    }
+
+    @Test
+    void checkUpdates_returns_both_answers_and_comments() {
+        Instant lastChecked = Instant.ofEpochSecond(1700000000);
+
+        stubQuestion("Test question");
+        stubAnswers("""
+                {"items": [
+                  {
+                    "owner": {"display_name": "alice"},
+                    "creation_date": 1700001000,
+                    "body": "answer text"
+                  }
+                ]}
+                """);
+        stubComments("""
+                {"items": [
+                  {
+                    "owner": {"display_name": "bob"},
+                    "creation_date": 1700001500,
+                    "body": "comment text"
+                  }
+                ]}
+                """);
+
+        List<LinkUpdateInfo> updates = handler.checkUpdates(SO_URL, lastChecked);
+
+        assertThat(updates).hasSize(2);
+    }
+
+    private void stubQuestion(String title) {
+        wiremock.stubFor(get(urlPathEqualTo("/2.3/questions/12345")).willReturn(jsonResponse("""
+                        {"items": [{"title": "%s", "last_activity_date": 1700000000}]}
+                        """.formatted(title))));
+    }
+
+    private void stubAnswers(String body) {
+        wiremock.stubFor(get(urlPathEqualTo("/2.3/questions/12345/answers")).willReturn(jsonResponse(body)));
+    }
+
+    private void stubComments(String body) {
+        wiremock.stubFor(get(urlPathEqualTo("/2.3/questions/12345/comments")).willReturn(jsonResponse(body)));
     }
 }

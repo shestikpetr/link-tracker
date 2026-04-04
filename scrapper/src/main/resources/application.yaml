@@ -27,5 +27,7 @@ app:
     base-url: http://localhost:8080
   scheduler:
     interval: PT1M
+    batch-size: 100
+    thread-count: 4
   database:
     access-type: ORM # INMEMORY, SQL, ORM

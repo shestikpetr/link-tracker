@@ -136,4 +136,30 @@ public class OrmLinkRepository implements LinkRepository {
     public void updateLastChecked(Long linkId, Instant lastCheckedAt) {
         jpaLinkRepository.findById(linkId).ifPresent(link -> link.setLastCheckedAt(lastCheckedAt));
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<URI, List<ChatLink>> findStaleLinksGroupedByUrl(int limit) {
+        List<Long> linkIds = jpaLinkRepository.findStaleLinks(limit).stream()
+                .map(LinkEntity::getId)
+                .toList();
+
+        if (linkIds.isEmpty()) {
+            return Map.of();
+        }
+
+        Map<URI, List<ChatLink>> result = new LinkedHashMap<>();
+        for (ChatLinkEntity cl : jpaChatLinkRepository.findByLinkIdsWithTags(linkIds)) {
+            URI uri = URI.create(cl.getLink().getUrl());
+            TrackedLink tracked = new TrackedLink(
+                    cl.getLink().getId(),
+                    uri,
+                    cl.getTags().stream().map(TagEntity::getName).toList(),
+                    List.of(cl.getFilters()),
+                    cl.getLink().getLastCheckedAt());
+            result.computeIfAbsent(uri, _ -> new ArrayList<>())
+                    .add(new ChatLink(cl.getId().getChatId(), tracked));
+        }
+        return result;
+    }
 }
