@@ -8,6 +8,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import backend.academy.linktracker.scrapper.client.GithubClient;
 import backend.academy.linktracker.scrapper.model.LinkUpdateInfo;
+import backend.academy.linktracker.scrapper.service.formatter.GithubUpdateFormatter;
+import backend.academy.linktracker.scrapper.utils.TextUtils;
 import java.net.URI;
 import java.time.Instant;
 import java.util.List;
@@ -22,7 +24,10 @@ class GithubLinkHandlerTest extends AbstractWireMockTest {
 
     @BeforeEach
     void setUp() {
-        handler = new GithubLinkHandler(createClient(GithubClient.class));
+        handler = new GithubLinkHandler(
+                createClient(GithubClient.class),
+                new GithubUpdateFormatter(new TextUtils()),
+                new GithubLinkExtractor());
     }
 
     @Test

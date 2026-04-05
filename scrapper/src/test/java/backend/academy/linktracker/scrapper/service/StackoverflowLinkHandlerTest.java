@@ -8,6 +8,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import backend.academy.linktracker.scrapper.client.StackoverflowClient;
 import backend.academy.linktracker.scrapper.model.LinkUpdateInfo;
+import backend.academy.linktracker.scrapper.service.formatter.StackoverflowUpdateFormatter;
+import backend.academy.linktracker.scrapper.utils.TextUtils;
 import java.net.URI;
 import java.time.Instant;
 import java.util.List;
@@ -22,7 +24,9 @@ class StackoverflowLinkHandlerTest extends AbstractWireMockTest {
 
     @BeforeEach
     void setUp() {
-        handler = new StackoverflowLinkHandler(createClient(StackoverflowClient.class));
+        var soClient = createClient(StackoverflowClient.class);
+        handler = new StackoverflowLinkHandler(
+                soClient, new StackoverflowUpdateFormatter(new TextUtils()), new StackoverflowLinkExtractor(soClient));
     }
 
     @Test

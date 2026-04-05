@@ -110,21 +110,7 @@ public class OrmLinkRepository implements LinkRepository {
     @Override
     @Transactional(readOnly = true)
     public Map<URI, List<ChatLink>> findAllGroupedByUrl() {
-        Map<URI, List<ChatLink>> result = new LinkedHashMap<>();
-
-        for (ChatLinkEntity cl : jpaChatLinkRepository.findAllWithLinkAndTags()) {
-            URI uri = URI.create(cl.getLink().getUrl());
-            TrackedLink tracked = new TrackedLink(
-                    cl.getLink().getId(),
-                    uri,
-                    cl.getTags().stream().map(TagEntity::getName).toList(),
-                    List.of(cl.getFilters()),
-                    cl.getLink().getLastCheckedAt());
-            result.computeIfAbsent(uri, _ -> new ArrayList<>())
-                    .add(new ChatLink(cl.getId().getChatId(), tracked));
-        }
-
-        return result;
+        return groupByUrl(jpaChatLinkRepository.findAllWithLinkAndTags());
     }
 
     @Override
@@ -148,8 +134,12 @@ public class OrmLinkRepository implements LinkRepository {
             return Map.of();
         }
 
+        return groupByUrl(jpaChatLinkRepository.findByLinkIdsWithTags(linkIds));
+    }
+
+    private Map<URI, List<ChatLink>> groupByUrl(List<ChatLinkEntity> chatLinks) {
         Map<URI, List<ChatLink>> result = new LinkedHashMap<>();
-        for (ChatLinkEntity cl : jpaChatLinkRepository.findByLinkIdsWithTags(linkIds)) {
+        for (ChatLinkEntity cl : chatLinks) {
             URI uri = URI.create(cl.getLink().getUrl());
             TrackedLink tracked = new TrackedLink(
                     cl.getLink().getId(),
