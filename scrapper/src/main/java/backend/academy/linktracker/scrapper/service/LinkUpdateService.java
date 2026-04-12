@@ -3,7 +3,6 @@ package backend.academy.linktracker.scrapper.service;
 import backend.academy.linktracker.scrapper.model.ChatLink;
 import backend.academy.linktracker.scrapper.repository.LinkRepository;
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,17 +19,19 @@ public class LinkUpdateService {
     public void checkAndNotify() {
         for (var entry : linkRepository.findAllGroupedByUrl().entrySet()) {
             URI url = entry.getKey();
+
             try {
                 linkChecker.getLastActivity(url).ifPresent(lastActivity -> {
-                    List<Long> chatIds = new ArrayList<>();
-                    for (ChatLink chatLink : entry.getValue()) {
-                        if (lastActivity.isAfter(chatLink.link().lastCheckedAt())) {
-                            chatIds.add(chatLink.chatId());
-                            linkRepository.updateLastChecked(chatLink.link().id(), lastActivity);
-                        }
-                    }
-                    if (!chatIds.isEmpty()) {
+                    List<ChatLink> updated = entry.getValue().stream()
+                            .filter(cl -> lastActivity.isAfter(cl.link().lastCheckedAt()))
+                            .toList();
+
+                    if (!updated.isEmpty()) {
+                        List<Long> chatIds =
+                                updated.stream().map(ChatLink::chatId).toList();
                         linkNotifier.notify(url, chatIds);
+                        linkRepository.updateLastChecked(
+                                updated.getFirst().link().id(), lastActivity);
                     }
                 });
             } catch (Exception e) {
