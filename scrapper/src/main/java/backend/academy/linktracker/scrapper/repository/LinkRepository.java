@@ -16,6 +16,8 @@ public interface LinkRepository {
 
     Collection<TrackedLink> findByChat(Long chatId);
 
+    Collection<TrackedLink> findByChatAndTags(Long chatId, List<String> tags);
+
     Map<URI, List<ChatLink>> findAllGroupedByUrl();
 
     void deleteByChat(Long chatId);

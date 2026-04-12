@@ -9,6 +9,7 @@ import backend.academy.linktracker.scrapper.model.TrackedLink;
 import backend.academy.linktracker.scrapper.repository.ChatRepository;
 import backend.academy.linktracker.scrapper.repository.LinkRepository;
 import java.net.URI;
+import java.util.Collection;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -22,18 +23,21 @@ public class LinkService {
 
     public List<LinkResponse> getLinks(Long chatId, List<String> tags) {
         requireChatExists(chatId);
-        return linkRepository.findByChat(chatId).stream()
-                .filter(link ->
-                        tags == null || tags.isEmpty() || link.tags().stream().anyMatch(tags::contains))
-                .map(this::toResponse)
-                .toList();
+
+        Collection<TrackedLink> links = tags == null || tags.isEmpty()
+                ? linkRepository.findByChat(chatId)
+                : linkRepository.findByChatAndTags(chatId, tags);
+
+        return links.stream().map(this::toResponse).toList();
     }
 
     public LinkResponse addLink(Long chatId, URI url, List<String> tags, List<String> filters) {
         requireChatExists(chatId);
+
         if (!linkChecker.supports(url)) {
             throw new UnsupportedLinkException(url);
         }
+
         return linkRepository
                 .addLink(chatId, url, tags, filters)
                 .map(this::toResponse)
@@ -42,6 +46,7 @@ public class LinkService {
 
     public LinkResponse removeLink(Long chatId, URI url) {
         requireChatExists(chatId);
+
         return linkRepository
                 .removeLink(chatId, url)
                 .map(this::toResponse)

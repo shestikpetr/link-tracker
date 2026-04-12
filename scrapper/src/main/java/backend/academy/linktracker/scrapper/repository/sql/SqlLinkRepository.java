@@ -4,6 +4,8 @@ import backend.academy.linktracker.scrapper.model.ChatLink;
 import backend.academy.linktracker.scrapper.model.TrackedLink;
 import backend.academy.linktracker.scrapper.repository.LinkRepository;
 import java.net.URI;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -153,31 +155,32 @@ public class SqlLinkRepository implements LinkRepository {
                     WHERE cl.chat_id = :chatId
                     """)
                 .param("chatId", chatId)
-                .query((rs, _) -> new LinkRow(
-                        chatId,
-                        rs.getLong("id"),
-                        rs.getString("url"),
-                        rs.getTimestamp("last_checked_at").toInstant(),
-                        rs.getArray("filters") != null
-                                ? (String[]) rs.getArray("filters").getArray()
-                                : new String[0],
-                        rs.getString("tag_name")))
+                .query((rs, _) -> mapLinkRow(chatId, rs))
                 .list();
 
-        return rows.stream()
-                .collect(Collectors.groupingBy(LinkRow::id, LinkedHashMap::new, Collectors.toList()))
-                .values()
-                .stream()
-                .map(group -> {
-                    var first = group.getFirst();
-                    List<String> tags = group.stream()
-                            .map(LinkRow::tagName)
-                            .filter(Objects::nonNull)
-                            .toList();
-                    return new TrackedLink(
-                            first.id(), URI.create(first.url()), tags, List.of(first.filters()), first.lastCheckedAt());
-                })
-                .toList();
+        return groupToTrackedLinks(rows);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Collection<TrackedLink> findByChatAndTags(Long chatId, List<String> tags) {
+        var rows = jdbcClient
+                .sql("""
+                    SELECT DISTINCT l.id, l.url, l.last_checked_at, cl.filters, t2.name AS tag_name
+                    FROM links l
+                    JOIN chat_links cl ON l.id = cl.link_id
+                    JOIN link_tags lt2 ON lt2.chat_id = cl.chat_id AND lt2.link_id = cl.link_id
+                    JOIN tags t_filter ON t_filter.id = lt2.tag_id AND t_filter.name IN (:tags)
+                    LEFT JOIN link_tags lt ON lt.chat_id = cl.chat_id AND lt.link_id = cl.link_id
+                    LEFT JOIN tags t2 ON t2.id = lt.tag_id
+                    WHERE cl.chat_id = :chatId
+                    """)
+                .param("chatId", chatId)
+                .param("tags", tags)
+                .query((rs, _) -> mapLinkRow(chatId, rs))
+                .list();
+
+        return groupToTrackedLinks(rows);
     }
 
     @Override
@@ -191,36 +194,24 @@ public class SqlLinkRepository implements LinkRepository {
                     LEFT JOIN link_tags lt ON lt.chat_id = cl.chat_id AND lt.link_id = cl.link_id
                     LEFT JOIN tags t ON t.id = lt.tag_id
                     """)
-                .query((rs, _) -> new LinkRow(
-                        rs.getLong("chat_id"),
-                        rs.getLong("id"),
-                        rs.getString("url"),
-                        rs.getTimestamp("last_checked_at").toInstant(),
-                        rs.getArray("filters") != null
-                                ? (String[]) rs.getArray("filters").getArray()
-                                : new String[0],
-                        rs.getString("tag_name")))
+                .query((rs, _) -> mapLinkRow(rs.getLong("chat_id"), rs))
                 .list();
 
         Map<Long, Map<Long, List<LinkRow>>> byChatAndLink =
                 rows.stream().collect(Collectors.groupingBy(LinkRow::chatId, Collectors.groupingBy(LinkRow::id)));
-
         Map<URI, List<ChatLink>> result = new LinkedHashMap<>();
+
         for (var chatEntry : byChatAndLink.entrySet()) {
             Long chatId = chatEntry.getKey();
+
             for (var linkEntry : chatEntry.getValue().entrySet()) {
-                List<LinkRow> group = linkEntry.getValue();
-                var first = group.getFirst();
-                List<String> tags = group.stream()
-                        .map(LinkRow::tagName)
-                        .filter(Objects::nonNull)
-                        .toList();
-                TrackedLink trackedLink = new TrackedLink(
-                        first.id(), URI.create(first.url()), tags, List.of(first.filters()), first.lastCheckedAt());
+                TrackedLink trackedLink = toTrackedLink(linkEntry.getValue());
+
                 result.computeIfAbsent(trackedLink.url(), _ -> new ArrayList<>())
                         .add(new ChatLink(chatId, trackedLink));
             }
         }
+
         return result;
     }
 
@@ -234,6 +225,36 @@ public class SqlLinkRepository implements LinkRepository {
         jdbcClient
                 .sql("DELETE FROM links WHERE NOT EXISTS (SELECT 1 FROM chat_links WHERE link_id = links.id)")
                 .update();
+    }
+
+    private LinkRow mapLinkRow(Long chatId, ResultSet rs) throws SQLException {
+        return new LinkRow(
+                chatId,
+                rs.getLong("id"),
+                rs.getString("url"),
+                rs.getTimestamp("last_checked_at").toInstant(),
+                rs.getArray("filters") != null
+                        ? (String[]) rs.getArray("filters").getArray()
+                        : new String[0],
+                rs.getString("tag_name"));
+    }
+
+    private Collection<TrackedLink> groupToTrackedLinks(List<LinkRow> rows) {
+        return rows.stream()
+                .collect(Collectors.groupingBy(LinkRow::id, LinkedHashMap::new, Collectors.toList()))
+                .values()
+                .stream()
+                .map(SqlLinkRepository::toTrackedLink)
+                .toList();
+    }
+
+    private static TrackedLink toTrackedLink(List<LinkRow> group) {
+        var first = group.getFirst();
+        List<String> tags =
+                group.stream().map(LinkRow::tagName).filter(Objects::nonNull).toList();
+
+        return new TrackedLink(
+                first.id(), URI.create(first.url()), tags, List.of(first.filters()), first.lastCheckedAt());
     }
 
     @Override
