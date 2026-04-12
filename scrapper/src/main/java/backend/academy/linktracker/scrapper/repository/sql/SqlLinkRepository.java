@@ -229,6 +229,10 @@ public class SqlLinkRepository implements LinkRepository {
                 .sql("DELETE FROM chat_links WHERE chat_id = :chatId")
                 .param("chatId", chatId)
                 .update();
+
+        jdbcClient
+                .sql("DELETE FROM links WHERE NOT EXISTS (SELECT 1 FROM chat_links WHERE link_id = links.id)")
+                .update();
     }
 
     @Override

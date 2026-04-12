@@ -131,6 +131,8 @@ public class OrmLinkRepository implements LinkRepository {
     @Override
     public void deleteByChat(Long chatId) {
         jpaChatLinkRepository.deleteByIdChatId(chatId);
+        jpaChatLinkRepository.flush();
+        jpaLinkRepository.deleteOrphan();
     }
 
     @Override

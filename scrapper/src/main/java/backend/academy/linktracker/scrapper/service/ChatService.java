@@ -6,6 +6,7 @@ import backend.academy.linktracker.scrapper.repository.ChatRepository;
 import backend.academy.linktracker.scrapper.repository.LinkRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -19,10 +20,12 @@ public class ChatService {
         }
     }
 
+    @Transactional
     public void delete(Long chatId) {
-        if (!chatRepository.deleteChat(chatId)) {
+        if (!chatRepository.chatExists(chatId)) {
             throw new ChatNotFoundException(chatId);
         }
         linkRepository.deleteByChat(chatId);
+        chatRepository.deleteChat(chatId);
     }
 }
