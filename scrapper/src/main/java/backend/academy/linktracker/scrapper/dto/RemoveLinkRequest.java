@@ -1,5 +1,6 @@
 package backend.academy.linktracker.scrapper.dto;
 
+import jakarta.validation.constraints.NotNull;
 import java.net.URI;
 
-public record RemoveLinkRequest(URI link) {}
+public record RemoveLinkRequest(@NotNull URI link) {}
