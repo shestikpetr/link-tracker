@@ -6,6 +6,7 @@ import backend.academy.linktracker.scrapper.repository.LinkRepository;
 import java.net.URI;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,8 +51,8 @@ public class InMemoryLinkRepository implements LinkRepository {
     }
 
     @Override
-    public List<TrackedLink> findByChat(Long chatId) {
-        return List.copyOf(getChatLinks(chatId).values());
+    public Collection<TrackedLink> findByChat(Long chatId) {
+        return getChatLinks(chatId).values();
     }
 
     @Override

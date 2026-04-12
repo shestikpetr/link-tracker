@@ -8,6 +8,7 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -140,7 +141,7 @@ public class SqlLinkRepository implements LinkRepository {
 
     @Override
     @Transactional(readOnly = true)
-    public List<TrackedLink> findByChat(Long chatId) {
+    public Collection<TrackedLink> findByChat(Long chatId) {
         var rows = jdbcClient
                 .sql("""
                     SELECT l.id, l.url, l.last_checked_at, cl.filters, t.name AS tag_name

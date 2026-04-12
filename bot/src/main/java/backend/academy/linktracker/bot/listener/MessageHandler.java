@@ -27,13 +27,13 @@ public class MessageHandler {
                 .log();
 
         if (text.startsWith("/")) {
-            chatStateService.clearState(chatId);
+            chatStateService.clearSession(chatId);
             commandDispatcher.dispatch(parse(text), update);
         } else {
             chatStateService
-                    .getState(chatId)
+                    .getSession(chatId)
                     .ifPresentOrElse(
-                            state -> stateInputDispatcher.dispatch(state, update),
+                            session -> stateInputDispatcher.dispatch(session, update),
                             () -> commandDispatcher.sendUnknownCommand(update));
         }
     }

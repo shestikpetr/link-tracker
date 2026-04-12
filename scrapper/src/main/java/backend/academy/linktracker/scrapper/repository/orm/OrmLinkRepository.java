@@ -10,6 +10,7 @@ import backend.academy.linktracker.scrapper.repository.LinkRepository;
 import java.net.URI;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -96,7 +97,7 @@ public class OrmLinkRepository implements LinkRepository {
 
     @Override
     @Transactional(readOnly = true)
-    public List<TrackedLink> findByChat(Long chatId) {
+    public Collection<TrackedLink> findByChat(Long chatId) {
         return jpaChatLinkRepository.findByIdChatIdWithLinkAndTags(chatId).stream()
                 .map(cl -> new TrackedLink(
                         cl.getLink().getId(),

@@ -7,6 +7,8 @@ import backend.academy.linktracker.scrapper.model.ChatLink;
 import backend.academy.linktracker.scrapper.model.TrackedLink;
 import java.net.URI;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
@@ -108,7 +110,7 @@ abstract class AbstractRepositoryTest {
         linkRepository.addLink(1L, GITHUB_URL, List.of("tag1"), List.of());
         linkRepository.addLink(1L, GITHUB_URL_2, List.of("tag2"), List.of());
 
-        List<TrackedLink> links = linkRepository.findByChat(1L);
+        Collection<TrackedLink> links = linkRepository.findByChat(1L);
 
         assertThat(links).hasSize(2);
         assertThat(links).extracting(TrackedLink::url).containsExactlyInAnyOrder(GITHUB_URL, GITHUB_URL_2);
@@ -159,8 +161,8 @@ abstract class AbstractRepositoryTest {
         Instant newTime = Instant.parse("2025-01-01T00:00:00Z");
         linkRepository.updateLastChecked(link.id(), newTime);
 
-        List<TrackedLink> links = linkRepository.findByChat(1L);
-        assertThat(links.getFirst().lastCheckedAt()).isEqualTo(newTime);
+        Collection<TrackedLink> links = linkRepository.findByChat(1L);
+        assertThat(new ArrayList<>(links).getFirst().lastCheckedAt()).isEqualTo(newTime);
     }
 
     @Test
@@ -169,8 +171,8 @@ abstract class AbstractRepositoryTest {
 
         linkRepository.addLink(1L, GITHUB_URL, List.of("java", "spring"), List.of());
 
-        List<TrackedLink> links = linkRepository.findByChat(1L);
-        assertThat(links.getFirst().tags()).containsExactlyInAnyOrder("java", "spring");
+        Collection<TrackedLink> links = linkRepository.findByChat(1L);
+        assertThat(new ArrayList<>(links).getFirst().tags()).containsExactlyInAnyOrder("java", "spring");
     }
 
     @Test
@@ -180,10 +182,10 @@ abstract class AbstractRepositoryTest {
         linkRepository.addLink(1L, GITHUB_URL, List.of("tag1"), List.of());
         linkRepository.addLink(2L, GITHUB_URL, List.of("tag2"), List.of());
 
-        List<TrackedLink> links1 = linkRepository.findByChat(1L);
-        List<TrackedLink> links2 = linkRepository.findByChat(2L);
+        Collection<TrackedLink> links1 = linkRepository.findByChat(1L);
+        Collection<TrackedLink> links2 = linkRepository.findByChat(2L);
 
-        assertThat(links1.getFirst().tags()).containsExactly("tag1");
-        assertThat(links2.getFirst().tags()).containsExactly("tag2");
+        assertThat(new ArrayList<>(links1).getFirst().tags()).containsExactly("tag1");
+        assertThat(new ArrayList<>(links2).getFirst().tags()).containsExactly("tag2");
     }
 }

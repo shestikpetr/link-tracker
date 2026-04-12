@@ -2,12 +2,15 @@ package backend.academy.linktracker.bot.command;
 
 import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.SendMessage;
-import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 @Component
-@Order(1000)
 public class CancelCommand implements Command {
+    @Override
+    public int order() {
+        return 1000;
+    }
+
     @Override
     public String command() {
         return "/cancel";
