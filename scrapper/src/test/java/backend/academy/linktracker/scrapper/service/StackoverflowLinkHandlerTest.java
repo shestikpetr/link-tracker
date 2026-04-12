@@ -11,6 +11,7 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import java.net.URI;
 import java.time.Instant;
+import java.util.Map;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,6 +20,7 @@ import org.springframework.http.MediaType;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.support.RestClientAdapter;
 import org.springframework.web.service.invoker.HttpServiceProxyFactory;
+import org.springframework.web.util.DefaultUriBuilderFactory;
 
 class StackoverflowLinkHandlerTest {
 
@@ -30,9 +32,10 @@ class StackoverflowLinkHandlerTest {
         wiremock = new WireMockServer(WireMockConfiguration.options().dynamicPort());
         wiremock.start();
 
-        var restClient = RestClient.builder()
-                .baseUrl("http://localhost:" + wiremock.port())
-                .build();
+        var uriFactory = new DefaultUriBuilderFactory("http://localhost:" + wiremock.port());
+        uriFactory.setDefaultUriVariables(Map.of("key", "test-key", "access_token", "test-token"));
+
+        var restClient = RestClient.builder().uriBuilderFactory(uriFactory).build();
         var factory = HttpServiceProxyFactory.builderFor(RestClientAdapter.create(restClient))
                 .build();
         StackoverflowClient client = factory.createClient(StackoverflowClient.class);

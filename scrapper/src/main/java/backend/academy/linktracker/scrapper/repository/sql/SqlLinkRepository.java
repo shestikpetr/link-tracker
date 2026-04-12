@@ -10,6 +10,7 @@ import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -58,7 +59,7 @@ public class SqlLinkRepository implements LinkRepository {
             return Optional.empty();
         }
 
-        for (String tag : tags) {
+        for (String tag : new LinkedHashSet<>(tags)) {
             jdbcClient
                     .sql("INSERT INTO tags (name) VALUES (:name) ON CONFLICT DO NOTHING")
                     .param("name", tag)
