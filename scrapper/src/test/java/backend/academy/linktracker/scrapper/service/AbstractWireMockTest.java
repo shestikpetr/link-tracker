@@ -5,6 +5,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
+import java.util.Map;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.http.HttpHeaders;
@@ -12,6 +13,7 @@ import org.springframework.http.MediaType;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.support.RestClientAdapter;
 import org.springframework.web.service.invoker.HttpServiceProxyFactory;
+import org.springframework.web.util.DefaultUriBuilderFactory;
 
 abstract class AbstractWireMockTest {
 
@@ -29,9 +31,10 @@ abstract class AbstractWireMockTest {
     }
 
     <T> T createClient(Class<T> clientClass) {
-        var restClient = RestClient.builder()
-                .baseUrl("http://localhost:" + wiremock.port())
-                .build();
+        var uriFactory = new DefaultUriBuilderFactory("http://localhost:" + wiremock.port());
+        uriFactory.setDefaultUriVariables(Map.of("key", "test-key", "access_token", "test-token"));
+
+        var restClient = RestClient.builder().uriBuilderFactory(uriFactory).build();
         var factory = HttpServiceProxyFactory.builderFor(RestClientAdapter.create(restClient))
                 .build();
         return factory.createClient(clientClass);

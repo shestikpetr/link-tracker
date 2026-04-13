@@ -1,19 +1,21 @@
 package backend.academy.linktracker.bot.command;
 
-import static backend.academy.linktracker.bot.state.ChatState.WAITING_UNTRACK_URL;
-
+import backend.academy.linktracker.bot.state.ChatSession;
 import backend.academy.linktracker.bot.state.ChatStateService;
 import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.SendMessage;
 import lombok.RequiredArgsConstructor;
-import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 @Component
-@Order(4)
 @RequiredArgsConstructor
 public class UntrackCommand implements Command {
     private final ChatStateService chatStateService;
+
+    @Override
+    public int order() {
+        return 4;
+    }
 
     @Override
     public String command() {
@@ -28,7 +30,7 @@ public class UntrackCommand implements Command {
     @Override
     public SendMessage handle(Update update) {
         long chatId = update.message().chat().id();
-        chatStateService.setState(chatId, WAITING_UNTRACK_URL);
+        chatStateService.setSession(chatId, new ChatSession.Untrack());
         return new SendMessage(chatId, "Введите URL:");
     }
 }

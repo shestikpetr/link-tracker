@@ -13,7 +13,7 @@ public class TagParser {
                 .toList();
     }
 
-    public String normalize(String tag) {
+    private String normalize(String tag) {
         return tag.trim().replaceAll("\\s+", " ");
     }
 }

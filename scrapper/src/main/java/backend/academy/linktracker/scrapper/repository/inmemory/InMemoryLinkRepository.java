@@ -6,6 +6,7 @@ import backend.academy.linktracker.scrapper.repository.LinkRepository;
 import java.net.URI;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +28,7 @@ public class InMemoryLinkRepository implements LinkRepository {
     public Optional<TrackedLink> addLink(Long chatId, URI url, List<String> tags, List<String> filters) {
         Map<Long, TrackedLink> links = getOrCreateChatLinks(chatId);
         boolean exists = links.values().stream().anyMatch(l -> l.url().equals(url));
+
         if (exists) {
             return Optional.empty();
         }
@@ -34,12 +36,14 @@ public class InMemoryLinkRepository implements LinkRepository {
         long id = idGen.getAndIncrement();
         TrackedLink link = new TrackedLink(id, url, tags, filters, Instant.now());
         links.put(id, link);
+
         return Optional.of(link);
     }
 
     @Override
     public Optional<TrackedLink> removeLink(Long chatId, URI url) {
         Map<Long, TrackedLink> links = getChatLinks(chatId);
+
         return links.values().stream()
                 .filter(l -> l.url().equals(url))
                 .findFirst()
@@ -50,19 +54,29 @@ public class InMemoryLinkRepository implements LinkRepository {
     }
 
     @Override
-    public List<TrackedLink> findByChat(Long chatId) {
-        return List.copyOf(getChatLinks(chatId).values());
+    public Collection<TrackedLink> findByChat(Long chatId) {
+        return getChatLinks(chatId).values();
+    }
+
+    @Override
+    public Collection<TrackedLink> findByChatAndTags(Long chatId, List<String> tags) {
+        return getChatLinks(chatId).values().stream()
+                .filter(link -> link.tags().stream().anyMatch(tags::contains))
+                .toList();
     }
 
     @Override
     public Map<URI, List<ChatLink>> findAllGroupedByUrl() {
         Map<URI, List<ChatLink>> result = new LinkedHashMap<>();
+
         for (var chatEntry : storage.entrySet()) {
             Long chatId = chatEntry.getKey();
+
             for (TrackedLink link : chatEntry.getValue().values()) {
                 result.computeIfAbsent(link.url(), _ -> new ArrayList<>()).add(new ChatLink(chatId, link));
             }
         }
+
         return result;
     }
 

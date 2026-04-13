@@ -55,10 +55,8 @@ class LinkServiceTest {
     @Test
     void getLinks_filters_by_tag() {
         var linkWork = new TrackedLink(1L, GITHUB_URL, List.of("work"), List.of(), Instant.now());
-        var linkHobby =
-                new TrackedLink(2L, URI.create("https://github.com/a/b"), List.of("hobby"), List.of(), Instant.now());
         when(chatRepository.chatExists(1L)).thenReturn(true);
-        when(linkRepository.findByChat(1L)).thenReturn(List.of(linkWork, linkHobby));
+        when(linkRepository.findByChatAndTags(1L, List.of("work"))).thenReturn(List.of(linkWork));
 
         List<LinkResponse> result = linkService.getLinks(1L, List.of("work"));
 

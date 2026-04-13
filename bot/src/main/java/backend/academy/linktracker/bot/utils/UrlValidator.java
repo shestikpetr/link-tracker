@@ -1,20 +1,20 @@
 package backend.academy.linktracker.bot.utils;
 
 import java.net.URI;
+import java.util.Optional;
 import org.springframework.stereotype.Component;
 
 @Component
 public class UrlValidator {
-    public boolean isValid(String text) {
+    public Optional<URI> parse(String text) {
         try {
             URI uri = URI.create(text.trim());
-            return uri.isAbsolute() && ("http".equals(uri.getScheme()) || "https".equals(uri.getScheme()));
+            if (uri.isAbsolute() && ("http".equals(uri.getScheme()) || "https".equals(uri.getScheme()))) {
+                return Optional.of(uri);
+            }
+            return Optional.empty();
         } catch (IllegalArgumentException e) {
-            return false;
+            return Optional.empty();
         }
-    }
-
-    public URI parse(String text) {
-        return URI.create(text.trim());
     }
 }

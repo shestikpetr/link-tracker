@@ -10,6 +10,7 @@ import backend.academy.linktracker.scrapper.repository.LinkRepository;
 import java.net.URI;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -36,6 +37,7 @@ public class OrmLinkRepository implements LinkRepository {
         LinkEntity link = jpaLinkRepository.findByUrl(url.toString()).orElseGet(() -> {
             LinkEntity l = new LinkEntity();
             l.setUrl(url.toString());
+
             return jpaLinkRepository.save(l);
         });
 
@@ -49,12 +51,13 @@ public class OrmLinkRepository implements LinkRepository {
         chatLink.setChat(jpaChatRepository.getReferenceById(chatId));
         chatLink.setLink(link);
         chatLink.setFilters(filters.toArray(String[]::new));
-
         Set<TagEntity> tagEntities = new HashSet<>();
+
         for (String tagName : tags) {
             TagEntity tag = jpaTagRepository.findByName(tagName).orElseGet(() -> {
                 TagEntity t = new TagEntity();
                 t.setName(tagName);
+
                 return jpaTagRepository.save(t);
             });
             tagEntities.add(tag);
@@ -69,6 +72,7 @@ public class OrmLinkRepository implements LinkRepository {
     @Override
     public Optional<TrackedLink> removeLink(Long chatId, URI url) {
         Optional<LinkEntity> linkOpt = jpaLinkRepository.findByUrl(url.toString());
+
         if (linkOpt.isEmpty()) {
             return Optional.empty();
         }
@@ -76,6 +80,7 @@ public class OrmLinkRepository implements LinkRepository {
         LinkEntity link = linkOpt.orElseThrow();
         ChatLinkId clId = new ChatLinkId(chatId, link.getId());
         Optional<ChatLinkEntity> chatLinkOpt = jpaChatLinkRepository.findById(clId);
+
         if (chatLinkOpt.isEmpty()) {
             return Optional.empty();
         }
@@ -96,8 +101,21 @@ public class OrmLinkRepository implements LinkRepository {
 
     @Override
     @Transactional(readOnly = true)
-    public List<TrackedLink> findByChat(Long chatId) {
+    public Collection<TrackedLink> findByChat(Long chatId) {
         return jpaChatLinkRepository.findByIdChatIdWithLinkAndTags(chatId).stream()
+                .map(cl -> new TrackedLink(
+                        cl.getLink().getId(),
+                        URI.create(cl.getLink().getUrl()),
+                        cl.getTags().stream().map(TagEntity::getName).toList(),
+                        List.of(cl.getFilters()),
+                        cl.getLink().getLastCheckedAt()))
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Collection<TrackedLink> findByChatAndTags(Long chatId, List<String> tags) {
+        return jpaChatLinkRepository.findByIdChatIdAndTagNames(chatId, tags).stream()
                 .map(cl -> new TrackedLink(
                         cl.getLink().getId(),
                         URI.create(cl.getLink().getUrl()),
@@ -116,6 +134,8 @@ public class OrmLinkRepository implements LinkRepository {
     @Override
     public void deleteByChat(Long chatId) {
         jpaChatLinkRepository.deleteByIdChatId(chatId);
+        jpaChatLinkRepository.flush();
+        jpaLinkRepository.deleteOrphan();
     }
 
     @Override

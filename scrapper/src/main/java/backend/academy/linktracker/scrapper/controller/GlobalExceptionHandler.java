@@ -10,6 +10,7 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -40,6 +41,25 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(UnsupportedLinkException.class)
     public ResponseEntity<ApiErrorResponse> handleUnsupportedLink(UnsupportedLinkException ex) {
         return buildResponse(ex, HttpStatusCode.valueOf(422), "Ссылка не поддерживается");
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ApiErrorResponse> handleValidation(MethodArgumentNotValidException ex) {
+        List<String> errors = ex.getFieldErrors().stream()
+                .map(fe -> fe.getField() + ": " + fe.getDefaultMessage())
+                .toList();
+        log.atWarn()
+                .setMessage("Ошибка валидации")
+                .addKeyValue("errors", errors)
+                .log();
+
+        return ResponseEntity.status(HttpStatusCode.valueOf(400))
+                .body(new ApiErrorResponse(
+                        "Некорректные параметры запроса",
+                        "400",
+                        ex.getClass().getSimpleName(),
+                        String.join("; ", errors),
+                        List.of()));
     }
 
     private ResponseEntity<ApiErrorResponse> buildResponse(

@@ -1,6 +1,5 @@
 package backend.academy.linktracker.bot.command;
 
-import static backend.academy.linktracker.bot.state.ChatState.WAITING_TRACK_TAGS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -9,6 +8,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import backend.academy.linktracker.bot.state.ChatSession;
 import backend.academy.linktracker.bot.state.ChatStateService;
 import backend.academy.linktracker.bot.utils.UrlValidator;
 import com.pengrad.telegrambot.model.Chat;
@@ -38,12 +38,12 @@ class TrackUrlStateHandlerTest {
     }
 
     @Test
-    void valid_url_stores_pending_url_and_transitions_to_waiting_tags() {
+    void valid_url_transitions_to_track_tags_session() {
         SendMessage response = handler.handleInput(buildUpdate("https://github.com/foo/bar"));
 
         assertThat(text(response)).isEqualTo("Введите теги:");
-        verify(chatStateService).setPendingUrl(CHAT_ID, URI.create("https://github.com/foo/bar"));
-        verify(chatStateService).setState(CHAT_ID, WAITING_TRACK_TAGS);
+        verify(chatStateService)
+                .setSession(CHAT_ID, new ChatSession.TrackTags(URI.create("https://github.com/foo/bar")));
     }
 
     @Test
@@ -51,8 +51,7 @@ class TrackUrlStateHandlerTest {
         SendMessage response = handler.handleInput(buildUpdate("не ссылка"));
 
         assertThat(text(response)).contains("Некорректная");
-        verify(chatStateService, never()).setPendingUrl(anyLong(), any());
-        verify(chatStateService, never()).setState(anyLong(), any());
+        verify(chatStateService, never()).setSession(anyLong(), any());
     }
 
     @Test
@@ -60,8 +59,7 @@ class TrackUrlStateHandlerTest {
         SendMessage response = handler.handleInput(buildUpdate("вов"));
 
         assertThat(text(response)).contains("Некорректная");
-        verify(chatStateService, never()).setPendingUrl(anyLong(), any());
-        verify(chatStateService, never()).setState(anyLong(), any());
+        verify(chatStateService, never()).setSession(anyLong(), any());
     }
 
     @Test
@@ -69,8 +67,7 @@ class TrackUrlStateHandlerTest {
         SendMessage response = handler.handleInput(buildUpdate("ftp://example.com/file"));
 
         assertThat(text(response)).contains("Некорректная");
-        verify(chatStateService, never()).setPendingUrl(anyLong(), any());
-        verify(chatStateService, never()).setState(anyLong(), any());
+        verify(chatStateService, never()).setSession(anyLong(), any());
     }
 
     private String text(SendMessage message) {

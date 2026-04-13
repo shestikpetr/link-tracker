@@ -32,9 +32,4 @@ class TagParserTest {
     void parseTags_empty_input_returns_empty_list() {
         assertThat(tagParser.parseTags("")).isEmpty();
     }
-
-    @Test
-    void normalize_collapses_multiple_spaces_and_trims() {
-        assertThat(tagParser.normalize("  мой   тег  ")).isEqualTo("мой тег");
-    }
 }
