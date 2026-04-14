@@ -6,6 +6,12 @@ spring:
     name: bot
   config:
     import: optional:file:bot/.env[.properties]
+  kafka:
+    bootstrap-servers: localhost:9092,localhost:9093,localhost:9094
+    consumer:
+      auto-offset-reset: earliest
+      properties:
+        spring.json.trusted.packages: "backend.academy.linktracker.*"
 
 app:
   telegram:
@@ -15,3 +21,10 @@ app:
     debug: false
   scrapper:
     base-url: http://localhost:8081
+  notification:
+    transport: KAFKA # KAFKA, HTTP
+  kafka:
+    topic-name: link-updates
+    dlq-topic-name: link-updates-dlq
+    consumer-group-id: bot-link-updates
+    max-retries: 3

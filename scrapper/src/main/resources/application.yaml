@@ -16,6 +16,12 @@ spring:
     hibernate:
       ddl-auto: validate
     open-in-view: false
+  kafka:
+    bootstrap-servers: localhost:9092,localhost:9093,localhost:9094
+    producer:
+      acks: all
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
 
 app:
   stackoverflow:
@@ -31,3 +37,7 @@ app:
     thread-count: 4
   database:
     access-type: ORM # INMEMORY, SQL, ORM
+  notification:
+    transport: KAFKA # KAFKA, HTTP
+  kafka:
+    topic-name: link-updates

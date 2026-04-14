@@ -6,3 +6,14 @@ app:
     debug: true
   scrapper:
     base-url: ${wiremock.server.baseUrl}
+  notification:
+    transport: HTTP
+  kafka:
+    topic-name: link-updates-test
+    dlq-topic-name: link-updates-dlq-test
+    consumer-group-id: bot-link-updates-test
+    max-retries: 2
+
+spring:
+  autoconfigure:
+    exclude: org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration

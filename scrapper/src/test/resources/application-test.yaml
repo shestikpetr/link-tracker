@@ -12,6 +12,10 @@ app:
     thread-count: 2
   database:
     access-type: SQL # INMEMORY, SQL, ORM
+  notification:
+    transport: HTTP
+  kafka:
+    topic-name: link-updates-test
 
 spring:
   liquibase:
@@ -20,3 +24,5 @@ spring:
     hibernate:
       ddl-auto: validate
     open-in-view: false
+  autoconfigure:
+    exclude: org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration
