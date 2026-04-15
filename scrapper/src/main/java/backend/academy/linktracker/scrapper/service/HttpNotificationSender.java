@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@ConditionalOnProperty(name = "app.notification.transport", havingValue = "http")
+@ConditionalOnProperty(name = "app.notification.transport", havingValue = "HTTP")
 public class HttpNotificationSender implements NotificationSender {
     private final BotClient botClient;
 
