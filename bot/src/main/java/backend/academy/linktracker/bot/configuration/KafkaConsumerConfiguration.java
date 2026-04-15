@@ -30,13 +30,11 @@ public class KafkaConsumerConfiguration {
     public DefaultErrorHandler kafkaErrorHandler(
             KafkaTemplate<Object, Object> kafkaTemplate, KafkaProperties kafkaProperties) {
         DeadLetterPublishingRecoverer recoverer = new DeadLetterPublishingRecoverer(
-                kafkaTemplate, (record, ex) -> new TopicPartition(kafkaProperties.getDlqTopicName(), -1));
+                kafkaTemplate, (_, _) -> new TopicPartition(kafkaProperties.getDlqTopicName(), -1));
         FixedBackOff backOff = new FixedBackOff(1000L, kafkaProperties.getMaxRetries());
         DefaultErrorHandler handler = new DefaultErrorHandler(recoverer, backOff);
         handler.addNotRetryableExceptions(
-                DeserializationException.class,
-                MessageConversionException.class,
-                IllegalArgumentException.class);
+                DeserializationException.class, MessageConversionException.class, IllegalArgumentException.class);
         return handler;
     }
 }

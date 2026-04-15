@@ -19,9 +19,7 @@ public class KafkaLinkUpdateListener {
     private final LinkUpdateNotifier linkUpdateNotifier;
     private final Validator validator;
 
-    @KafkaListener(
-            topics = "${app.kafka.topic-name}",
-            groupId = "${app.kafka.consumer-group-id}")
+    @KafkaListener(topics = "${app.kafka.topic-name}", groupId = "${app.kafka.consumer-group-id}")
     public void listen(LinkUpdate update) {
         Set<ConstraintViolation<LinkUpdate>> violations = validator.validate(update);
         if (!violations.isEmpty()) {
