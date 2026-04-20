@@ -86,19 +86,28 @@ class KafkaNotificationSenderTest {
         valueDeserializer.setUseTypeHeaders(false);
 
         Map<String, Object> props = Map.of(
-                ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaConnectionDetails.getBootstrapServers(),
-                ConsumerConfig.GROUP_ID_CONFIG, "test-consumer-" + System.nanoTime(),
-                ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest",
-                ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
+                ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,
+                kafkaConnectionDetails.getBootstrapServers(),
+                ConsumerConfig.GROUP_ID_CONFIG,
+                "test-consumer-" + System.nanoTime(),
+                ConsumerConfig.AUTO_OFFSET_RESET_CONFIG,
+                "earliest",
+                ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG,
+                false);
 
         DefaultKafkaConsumerFactory<String, LinkUpdate> factory =
                 new DefaultKafkaConsumerFactory<>(props, new StringDeserializer(), valueDeserializer);
         try (Consumer<String, LinkUpdate> consumer = factory.createConsumer()) {
             consumer.subscribe(List.of(topicName));
-            return await().atMost(30, TimeUnit.SECONDS).until(() -> {
-                ConsumerRecords<String, LinkUpdate> records = consumer.poll(Duration.ofMillis(500));
-                return records.iterator().hasNext() ? records.iterator().next() : null;
-            }, r -> r != null);
+            return await().atMost(30, TimeUnit.SECONDS)
+                    .until(
+                            () -> {
+                                ConsumerRecords<String, LinkUpdate> records = consumer.poll(Duration.ofMillis(500));
+                                return records.iterator().hasNext()
+                                        ? records.iterator().next()
+                                        : null;
+                            },
+                            r -> r != null);
         }
     }
 }
