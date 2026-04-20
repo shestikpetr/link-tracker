@@ -18,6 +18,7 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.Consumer;
@@ -52,7 +53,12 @@ import org.wiremock.spring.EnableWireMock;
             "app.kafka.topic-name=link-updates-dlq-src-test",
             "app.kafka.dlq-topic-name=link-updates-dlq-sink-test",
             "app.kafka.max-retries=2",
-            "spring.autoconfigure.exclude=",
+            "spring.autoconfigure.exclude[0]=org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration",
+            "spring.autoconfigure.exclude[1]=org.springframework.boot.jdbc.autoconfigure.DataSourceTransactionManagerAutoConfiguration",
+            "spring.autoconfigure.exclude[2]=org.springframework.boot.hibernate.autoconfigure.HibernateJpaAutoConfiguration",
+            "spring.autoconfigure.exclude[3]=org.springframework.boot.data.jpa.autoconfigure.DataJpaRepositoriesAutoConfiguration",
+            "spring.autoconfigure.exclude[4]=org.springframework.boot.data.jdbc.autoconfigure.DataJdbcRepositoriesAutoConfiguration",
+            "spring.autoconfigure.exclude[5]=org.springframework.boot.liquibase.autoconfigure.LiquibaseAutoConfiguration",
             "spring.kafka.producer.properties.spring.json.add.type.headers=false",
             "spring.main.allow-bean-definition-overriding=true"
         })
@@ -112,7 +118,7 @@ class KafkaDlqTest {
     @Test
     void invalidJson_isSentToDlqWithoutRetries() throws Exception {
         String key = "https://github.com/foo/bar-invalid-json";
-        sendRawJson(topicName, key, "not a json");
+        sendInvalidJson(topicName, key);
 
         ConsumerRecord<String, byte[]> dlqRecord = readFromDlq(key, Duration.ofSeconds(15));
         assertThat(dlqRecord.key()).isEqualTo(key);
@@ -131,13 +137,13 @@ class KafkaDlqTest {
         verify(linkUpdateNotifier, atMost(0)).notify(any(LinkUpdate.class));
     }
 
-    private void sendRawJson(String topic, String key, String payload) throws Exception {
+    private void sendInvalidJson(String topic, String key) throws Exception {
         Map<String, Object> props = new HashMap<>();
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaConnectionDetails.getBootstrapServers());
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         try (KafkaProducer<String, String> producer = new KafkaProducer<>(props)) {
-            producer.send(new ProducerRecord<>(topic, key, payload)).get();
+            producer.send(new ProducerRecord<>(topic, key, "not a json")).get();
         }
     }
 
@@ -167,7 +173,7 @@ class KafkaDlqTest {
                                 }
                                 return null;
                             },
-                            r -> r != null);
+                            Objects::nonNull);
         }
     }
 }

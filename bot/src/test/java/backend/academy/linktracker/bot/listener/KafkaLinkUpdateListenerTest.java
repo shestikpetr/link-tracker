@@ -29,7 +29,12 @@ import org.wiremock.spring.EnableWireMock;
             "app.notification.transport=KAFKA",
             "app.kafka.topic-name=link-updates-test",
             "app.kafka.dlq-topic-name=link-updates-dlq-test",
-            "spring.autoconfigure.exclude=",
+            "spring.autoconfigure.exclude[0]=org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration",
+            "spring.autoconfigure.exclude[1]=org.springframework.boot.jdbc.autoconfigure.DataSourceTransactionManagerAutoConfiguration",
+            "spring.autoconfigure.exclude[2]=org.springframework.boot.hibernate.autoconfigure.HibernateJpaAutoConfiguration",
+            "spring.autoconfigure.exclude[3]=org.springframework.boot.data.jpa.autoconfigure.DataJpaRepositoriesAutoConfiguration",
+            "spring.autoconfigure.exclude[4]=org.springframework.boot.data.jdbc.autoconfigure.DataJdbcRepositoriesAutoConfiguration",
+            "spring.autoconfigure.exclude[5]=org.springframework.boot.liquibase.autoconfigure.LiquibaseAutoConfiguration",
             "spring.kafka.producer.properties.spring.json.add.type.headers=false",
             "spring.main.allow-bean-definition-overriding=true"
         })
