@@ -97,6 +97,30 @@ class LinkServiceTest {
     }
 
     @Test
+    void updateLink_delegates_to_repository() {
+        var updated = new TrackedLink(1L, GITHUB_URL, List.of("new-tag"), List.of("new-filter"), Instant.now());
+        when(chatRepository.chatExists(1L)).thenReturn(true);
+        when(linkRepository.updateLink(1L, GITHUB_URL, List.of("new-tag"), List.of("new-filter")))
+                .thenReturn(Optional.of(updated));
+
+        LinkResponse result = linkService.updateLink(1L, GITHUB_URL, List.of("new-tag"), List.of("new-filter"));
+
+        assertThat(result.url()).isEqualTo(GITHUB_URL);
+        assertThat(result.tags()).containsExactly("new-tag");
+        assertThat(result.filters()).containsExactly("new-filter");
+        verify(linkRepository).updateLink(1L, GITHUB_URL, List.of("new-tag"), List.of("new-filter"));
+    }
+
+    @Test
+    void updateLink_throws_when_not_found() {
+        when(chatRepository.chatExists(1L)).thenReturn(true);
+        when(linkRepository.updateLink(1L, GITHUB_URL, List.of(), List.of())).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> linkService.updateLink(1L, GITHUB_URL, List.of(), List.of()))
+                .isInstanceOf(LinkNotFoundException.class);
+    }
+
+    @Test
     void removeLink_delegates_to_repository() {
         var removed = new TrackedLink(1L, GITHUB_URL, List.of(), List.of(), Instant.now());
         when(chatRepository.chatExists(1L)).thenReturn(true);

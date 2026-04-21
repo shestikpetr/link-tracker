@@ -176,6 +176,74 @@ abstract class AbstractRepositoryTest {
     }
 
     @Test
+    void updateLink_replaces_tags_and_filters() {
+        chatRepository.registerChat(1L);
+        linkRepository.addLink(1L, GITHUB_URL, List.of("old-tag"), List.of("old-filter"));
+
+        TrackedLink updated = linkRepository
+                .updateLink(1L, GITHUB_URL, List.of("new-tag1", "new-tag2"), List.of("new-filter"))
+                .orElseThrow();
+
+        assertThat(updated.tags()).containsExactlyInAnyOrder("new-tag1", "new-tag2");
+        assertThat(updated.filters()).containsExactly("new-filter");
+
+        TrackedLink reloaded = new ArrayList<>(linkRepository.findByChat(1L)).getFirst();
+        assertThat(reloaded.tags()).containsExactlyInAnyOrder("new-tag1", "new-tag2");
+        assertThat(reloaded.filters()).containsExactly("new-filter");
+    }
+
+    @Test
+    void updateLink_nonexistent_returns_empty() {
+        chatRepository.registerChat(1L);
+
+        assertThat(linkRepository.updateLink(1L, GITHUB_URL, List.of("tag"), List.of()))
+                .isEmpty();
+    }
+
+    @Test
+    void updateLink_from_different_chat_returns_empty() {
+        chatRepository.registerChat(1L);
+        chatRepository.registerChat(2L);
+        linkRepository.addLink(1L, GITHUB_URL, List.of("tag1"), List.of());
+
+        assertThat(linkRepository.updateLink(2L, GITHUB_URL, List.of("tag2"), List.of()))
+                .isEmpty();
+
+        assertThat(new ArrayList<>(linkRepository.findByChat(1L)).getFirst().tags())
+                .containsExactly("tag1");
+    }
+
+    @Test
+    void updateLink_preserves_lastCheckedAt() {
+        chatRepository.registerChat(1L);
+        TrackedLink link = linkRepository
+                .addLink(1L, GITHUB_URL, List.of("tag"), List.of())
+                .orElseThrow();
+
+        Instant pinnedTime = Instant.parse("2025-01-01T00:00:00Z");
+        linkRepository.updateLastChecked(link.id(), pinnedTime);
+
+        TrackedLink updated = linkRepository
+                .updateLink(1L, GITHUB_URL, List.of("new-tag"), List.of())
+                .orElseThrow();
+
+        assertThat(updated.lastCheckedAt()).isEqualTo(pinnedTime);
+    }
+
+    @Test
+    void updateLink_does_not_affect_other_chat_subscriptions() {
+        chatRepository.registerChat(1L);
+        chatRepository.registerChat(2L);
+        linkRepository.addLink(1L, GITHUB_URL, List.of("chat1-tag"), List.of());
+        linkRepository.addLink(2L, GITHUB_URL, List.of("chat2-tag"), List.of());
+
+        linkRepository.updateLink(1L, GITHUB_URL, List.of("chat1-new"), List.of());
+
+        assertThat(new ArrayList<>(linkRepository.findByChat(2L)).getFirst().tags())
+                .containsExactly("chat2-tag");
+    }
+
+    @Test
     void same_url_different_chats_different_tags() {
         chatRepository.registerChat(1L);
         chatRepository.registerChat(2L);
