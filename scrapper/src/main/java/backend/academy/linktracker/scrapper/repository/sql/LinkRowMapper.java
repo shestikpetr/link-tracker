@@ -5,6 +5,7 @@ import backend.academy.linktracker.scrapper.model.TrackedLink;
 import java.net.URI;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -19,11 +20,12 @@ class LinkRowMapper implements RowMapper<LinkRow> {
 
     @Override
     public LinkRow mapRow(ResultSet rs, int rowNum) throws SQLException {
+        Timestamp lastCheckedAt = rs.getTimestamp("last_checked_at");
         return new LinkRow(
                 rs.getLong("chat_id"),
                 rs.getLong("id"),
                 rs.getString("url"),
-                rs.getTimestamp("last_checked_at").toInstant(),
+                lastCheckedAt == null ? null : lastCheckedAt.toInstant(),
                 rs.getArray("filters") != null
                         ? (String[]) rs.getArray("filters").getArray()
                         : new String[0],

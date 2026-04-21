@@ -4,6 +4,7 @@ import backend.academy.linktracker.scrapper.model.ChatLink;
 import backend.academy.linktracker.scrapper.model.TrackedLink;
 import backend.academy.linktracker.scrapper.repository.LinkRepository;
 import java.net.URI;
+import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -36,8 +37,7 @@ public class SqlLinkRepository implements LinkRepository {
                     RETURNING id, last_checked_at
                     """)
                 .param("url", url.toString())
-                .query((rs, _) -> Map.entry(
-                        rs.getLong("id"), rs.getTimestamp("last_checked_at").toInstant()))
+                .query((rs, _) -> Map.entry(rs.getLong("id"), toInstantOrNull(rs.getTimestamp("last_checked_at"))))
                 .single();
 
         Long linkId = linkRow.getKey();
@@ -82,8 +82,7 @@ public class SqlLinkRepository implements LinkRepository {
         var linkRow = jdbcClient
                 .sql("SELECT id, last_checked_at FROM links WHERE url = :url")
                 .param("url", url.toString())
-                .query((rs, _) -> Map.entry(
-                        rs.getLong("id"), rs.getTimestamp("last_checked_at").toInstant()))
+                .query((rs, _) -> Map.entry(rs.getLong("id"), toInstantOrNull(rs.getTimestamp("last_checked_at"))))
                 .optional();
 
         if (linkRow.isEmpty()) {
@@ -140,8 +139,7 @@ public class SqlLinkRepository implements LinkRepository {
         var linkRow = jdbcClient
                 .sql("SELECT id, last_checked_at FROM links WHERE url = :url")
                 .param("url", url.toString())
-                .query((rs, _) -> Map.entry(
-                        rs.getLong("id"), rs.getTimestamp("last_checked_at").toInstant()))
+                .query((rs, _) -> Map.entry(rs.getLong("id"), toInstantOrNull(rs.getTimestamp("last_checked_at"))))
                 .optional();
 
         if (linkRow.isEmpty()) {
@@ -263,6 +261,10 @@ public class SqlLinkRepository implements LinkRepository {
                 .param("lastCheckedAt", OffsetDateTime.ofInstant(lastCheckedAt, ZoneOffset.UTC))
                 .param("linkId", linkId)
                 .update();
+    }
+
+    private static Instant toInstantOrNull(Timestamp timestamp) {
+        return timestamp == null ? null : timestamp.toInstant();
     }
 
     @Override

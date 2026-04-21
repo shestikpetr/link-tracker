@@ -23,8 +23,8 @@ public class SchedulerProperties {
 
     @Min(50)
     @Max(500)
-    private int batchSize = 100;
+    private int batchSize;
 
     @Min(1)
-    private int threadCount = 4;
+    private int threadCount;
 }

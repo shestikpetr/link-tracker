@@ -4,6 +4,7 @@ import backend.academy.linktracker.scrapper.model.ChatLink;
 import backend.academy.linktracker.scrapper.properties.SchedulerProperties;
 import backend.academy.linktracker.scrapper.repository.LinkRepository;
 import backend.academy.linktracker.scrapper.utils.ListPartitioner;
+import jakarta.annotation.PreDestroy;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,6 +12,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -33,6 +35,19 @@ public class LinkBatchProcessor {
         this.schedulerProperties = schedulerProperties;
         this.listPartitioner = listPartitioner;
         this.executorService = Executors.newFixedThreadPool(schedulerProperties.getThreadCount());
+    }
+
+    @PreDestroy
+    public void shutdown() {
+        executorService.shutdown();
+        try {
+            if (!executorService.awaitTermination(30, TimeUnit.SECONDS)) {
+                executorService.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            executorService.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
     }
 
     public void processBatch() {
