@@ -10,7 +10,7 @@ import org.springframework.web.service.annotation.HttpExchange;
 
 @HttpExchange(accept = "application/json")
 public interface StackoverflowClient {
-    @GetExchange("/2.3/questions/{id}?site=stackoverflow&key={key}&access_token={access_token}")
+    @GetExchange("/2.3/questions/{id}?site=stackoverflow")
     StackoverflowQuestionResponse getQuestions(@PathVariable Long id);
 
     @GetExchange("/2.3/questions/{id}/answers")

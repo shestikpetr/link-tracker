@@ -1,6 +1,8 @@
 package backend.academy.linktracker.scrapper.properties;
 
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+import java.time.Duration;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -18,4 +20,10 @@ public class GithubProperties {
 
     @NotEmpty
     private String token;
+
+    @NotNull
+    private Duration connectTimeout;
+
+    @NotNull
+    private Duration readTimeout;
 }
