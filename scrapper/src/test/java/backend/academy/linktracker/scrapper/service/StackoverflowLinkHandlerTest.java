@@ -26,7 +26,7 @@ class StackoverflowLinkHandlerTest extends AbstractWireMockTest {
     void setUp() {
         var soClient = createClient(StackoverflowClient.class);
         handler = new StackoverflowLinkHandler(
-                soClient, new StackoverflowUpdateFormatter(new TextUtils()), new StackoverflowLinkExtractor(soClient));
+                soClient, new StackoverflowUpdateFormatter(new TextUtils()), new StackoverflowLinkExtractor());
     }
 
     @Test

@@ -27,7 +27,7 @@ public class StackoverflowLinkHandler implements LinkHandler {
     @Override
     public List<LinkUpdateInfo> checkUpdates(URI url, Instant lastCheckedAt) {
         Long questionId = extractor.extractQuestionId(url);
-        String questionTitle = extractor.fetchQuestionTitle(questionId);
+        String questionTitle = fetchQuestionTitle(questionId);
 
         List<LinkUpdateInfo> updates = new ArrayList<>();
 
@@ -47,5 +47,13 @@ public class StackoverflowLinkHandler implements LinkHandler {
         }
 
         return updates;
+    }
+
+    private String fetchQuestionTitle(Long questionId) {
+        var items = stackoverflowClient.getQuestions(questionId).items();
+        if (items.isEmpty()) {
+            return "(неизвестный вопрос)";
+        }
+        return items.getFirst().title();
     }
 }
