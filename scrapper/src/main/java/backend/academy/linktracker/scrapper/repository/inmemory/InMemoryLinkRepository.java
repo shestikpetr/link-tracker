@@ -41,6 +41,20 @@ public class InMemoryLinkRepository implements LinkRepository {
     }
 
     @Override
+    public Optional<TrackedLink> updateLink(Long chatId, URI url, List<String> tags, List<String> filters) {
+        Map<Long, TrackedLink> links = getChatLinks(chatId);
+
+        return links.values().stream()
+                .filter(l -> l.url().equals(url))
+                .findFirst()
+                .map(l -> {
+                    TrackedLink updated = new TrackedLink(l.id(), l.url(), tags, filters, l.lastCheckedAt());
+                    links.put(l.id(), updated);
+                    return updated;
+                });
+    }
+
+    @Override
     public Optional<TrackedLink> removeLink(Long chatId, URI url) {
         Map<Long, TrackedLink> links = getChatLinks(chatId);
 

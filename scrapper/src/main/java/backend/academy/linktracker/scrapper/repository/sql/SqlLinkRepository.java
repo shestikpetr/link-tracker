@@ -85,6 +85,64 @@ public class SqlLinkRepository implements LinkRepository {
     }
 
     @Override
+    public Optional<TrackedLink> updateLink(Long chatId, URI url, List<String> tags, List<String> filters) {
+        var linkRow = jdbcClient
+                .sql("SELECT id, last_checked_at FROM links WHERE url = :url")
+                .param("url", url.toString())
+                .query((rs, _) -> Map.entry(
+                        rs.getLong("id"), rs.getTimestamp("last_checked_at").toInstant()))
+                .optional();
+
+        if (linkRow.isEmpty()) {
+            return Optional.empty();
+        }
+
+        Long linkId = linkRow.orElseThrow().getKey();
+        Instant lastCheckedAt = linkRow.orElseThrow().getValue();
+
+        Optional<Long> chatLinkIdOpt = jdbcClient
+                .sql("SELECT id FROM chat_links WHERE chat_id = :chatId AND link_id = :linkId")
+                .param("chatId", chatId)
+                .param("linkId", linkId)
+                .query(Long.class)
+                .optional();
+
+        if (chatLinkIdOpt.isEmpty()) {
+            return Optional.empty();
+        }
+
+        Long chatLinkId = chatLinkIdOpt.orElseThrow();
+
+        jdbcClient
+                .sql("UPDATE chat_links SET filters = :filters WHERE id = :chatLinkId")
+                .param("filters", filters.toArray(String[]::new))
+                .param("chatLinkId", chatLinkId)
+                .update();
+
+        jdbcClient
+                .sql("DELETE FROM link_tags WHERE chat_link_id = :chatLinkId")
+                .param("chatLinkId", chatLinkId)
+                .update();
+
+        for (String tag : new LinkedHashSet<>(tags)) {
+            Long tagId =
+                    jdbcClient.sql("""
+                        INSERT INTO tags (name) VALUES (:name)
+                        ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name
+                        RETURNING id
+                        """).param("name", tag).query(Long.class).single();
+
+            jdbcClient
+                    .sql("INSERT INTO link_tags (chat_link_id, tag_id) VALUES (:chatLinkId, :tagId)")
+                    .param("chatLinkId", chatLinkId)
+                    .param("tagId", tagId)
+                    .update();
+        }
+
+        return Optional.of(new TrackedLink(linkId, url, tags, filters, lastCheckedAt));
+    }
+
+    @Override
     public Optional<TrackedLink> removeLink(Long chatId, URI url) {
         var linkRow = jdbcClient
                 .sql("SELECT id, last_checked_at FROM links WHERE url = :url")

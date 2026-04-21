@@ -44,6 +44,15 @@ public class LinkService {
                 .orElseThrow(() -> new LinkAlreadyExistsException(url));
     }
 
+    public LinkResponse updateLink(Long chatId, URI url, List<String> tags, List<String> filters) {
+        requireChatExists(chatId);
+
+        return linkRepository
+                .updateLink(chatId, url, tags, filters)
+                .map(this::toResponse)
+                .orElseThrow(() -> new LinkNotFoundException(url));
+    }
+
     public LinkResponse removeLink(Long chatId, URI url) {
         requireChatExists(chatId);
 

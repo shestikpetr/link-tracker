@@ -67,6 +67,40 @@ public class OrmLinkRepository implements LinkRepository {
     }
 
     @Override
+    public Optional<TrackedLink> updateLink(Long chatId, URI url, List<String> tags, List<String> filters) {
+        Optional<LinkEntity> linkOpt = jpaLinkRepository.findByUrl(url.toString());
+
+        if (linkOpt.isEmpty()) {
+            return Optional.empty();
+        }
+
+        LinkEntity link = linkOpt.orElseThrow();
+        Optional<ChatLinkEntity> chatLinkOpt = jpaChatLinkRepository.findByChatIdAndLinkId(chatId, link.getId());
+
+        if (chatLinkOpt.isEmpty()) {
+            return Optional.empty();
+        }
+
+        ChatLinkEntity chatLink = chatLinkOpt.orElseThrow();
+        chatLink.setFilters(filters.toArray(String[]::new));
+
+        Set<TagEntity> tagEntities = new HashSet<>();
+        for (String tagName : tags) {
+            TagEntity tag = jpaTagRepository.findByName(tagName).orElseGet(() -> {
+                TagEntity t = new TagEntity();
+                t.setName(tagName);
+
+                return jpaTagRepository.save(t);
+            });
+            tagEntities.add(tag);
+        }
+        chatLink.getTags().clear();
+        chatLink.getTags().addAll(tagEntities);
+
+        return Optional.of(new TrackedLink(link.getId(), url, tags, filters, link.getLastCheckedAt()));
+    }
+
+    @Override
     public Optional<TrackedLink> removeLink(Long chatId, URI url) {
         Optional<LinkEntity> linkOpt = jpaLinkRepository.findByUrl(url.toString());
 
