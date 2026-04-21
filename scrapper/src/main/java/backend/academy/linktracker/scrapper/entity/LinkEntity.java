@@ -28,4 +28,7 @@ public class LinkEntity {
 
     @Column(name = "last_checked_at", nullable = false, insertable = false)
     private Instant lastCheckedAt;
+
+    @Column(name = "created_at", nullable = false, updatable = false, insertable = false)
+    private Instant createdAt;
 }

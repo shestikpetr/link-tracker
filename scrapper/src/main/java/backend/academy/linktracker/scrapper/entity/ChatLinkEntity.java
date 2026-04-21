@@ -1,18 +1,20 @@
 package backend.academy.linktracker.scrapper.entity;
 
 import jakarta.persistence.Column;
-import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.MapsId;
 import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -24,18 +26,18 @@ import org.hibernate.type.SqlTypes;
 @Getter
 @Setter
 @NoArgsConstructor
+@EqualsAndHashCode(of = "id")
 public class ChatLinkEntity {
-    @EmbeddedId
-    private ChatLinkId id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @MapsId("chatId")
-    @JoinColumn(name = "chat_id")
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "chat_id", nullable = false)
     private ChatEntity chat;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @MapsId("linkId")
-    @JoinColumn(name = "link_id")
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "link_id", nullable = false)
     private LinkEntity link;
 
     @Column(name = "created_at", nullable = false, updatable = false, insertable = false)
@@ -48,10 +50,7 @@ public class ChatLinkEntity {
     @ManyToMany
     @JoinTable(
             name = "link_tags",
-            joinColumns = {
-                @JoinColumn(name = "chat_id", referencedColumnName = "chat_id"),
-                @JoinColumn(name = "link_id", referencedColumnName = "link_id")
-            },
+            joinColumns = @JoinColumn(name = "chat_link_id"),
             inverseJoinColumns = @JoinColumn(name = "tag_id"))
     private Set<TagEntity> tags = new HashSet<>();
 }

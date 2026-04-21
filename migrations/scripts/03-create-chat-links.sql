@@ -3,9 +3,12 @@
 
 CREATE TABLE chat_links
 (
-    chat_id    BIGINT REFERENCES chats (id) ON DELETE CASCADE,
-    link_id    BIGINT REFERENCES links (id) ON DELETE CASCADE,
+    id         BIGSERIAL PRIMARY KEY,
+    chat_id    BIGINT      NOT NULL REFERENCES chats (id) ON DELETE CASCADE,
+    link_id    BIGINT      NOT NULL REFERENCES links (id) ON DELETE CASCADE,
     filters    TEXT[],
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    PRIMARY KEY (chat_id, link_id)
+    UNIQUE (chat_id, link_id)
 );
+
+CREATE INDEX idx_chat_links_link_id ON chat_links (link_id);

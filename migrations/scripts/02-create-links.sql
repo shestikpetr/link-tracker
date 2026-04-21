@@ -5,5 +5,6 @@ CREATE TABLE links
 (
     id              BIGSERIAL PRIMARY KEY,
     url             TEXT        NOT NULL UNIQUE,
-    last_checked_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    last_checked_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 );
