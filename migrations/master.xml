@@ -8,5 +8,4 @@
     <include file="scripts/03-create-chat-links.sql" relativeToChangelogFile="true"/>
     <include file="scripts/04-create-tags.sql" relativeToChangelogFile="true"/>
     <include file="scripts/05-create-link-tags.sql" relativeToChangelogFile="true"/>
-    <include file="scripts/06-create-indexes.sql" relativeToChangelogFile="true"/>
 </databaseChangeLog>
