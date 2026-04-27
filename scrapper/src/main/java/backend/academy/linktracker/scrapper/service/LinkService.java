@@ -12,6 +12,7 @@ import java.net.URI;
 import java.util.Collection;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -21,6 +22,7 @@ public class LinkService {
     private final ChatRepository chatRepository;
     private final LinkChecker linkChecker;
 
+    @Cacheable(cacheNames = "links", key = "#chatId + ':' + (#tags == null ? '' : #tags)")
     public List<LinkResponse> getLinks(Long chatId, List<String> tags) {
         requireChatExists(chatId);
 
