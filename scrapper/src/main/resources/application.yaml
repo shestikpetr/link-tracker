@@ -25,6 +25,18 @@ spring:
       properties:
         spring.json.add.type.headers: false
         enable.idempotence: true
+  data:
+    redis:
+      cluster:
+        nodes: localhost:6379, localhost:6380, localhost:6381
+      timeout: 2s
+  cache:
+    type: redis
+    cache-names: links
+    redis:
+      time-to-live: PT5M
+      key-prefix: "scrapper::"
+      use-key-prefix: true
 
 app:
   stackoverflow:
