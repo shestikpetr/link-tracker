@@ -105,7 +105,7 @@ class KafkaDlqTest {
         doThrow(new RuntimeException("boom")).when(linkUpdateNotifier).notify(any(LinkUpdate.class));
 
         String key = "https://github.com/foo/bar-retry";
-        LinkUpdate update = new LinkUpdate(1L, URI.create(key), "desc", List.of(42L));
+        LinkUpdate update = new LinkUpdate(URI.create(key), "desc", List.of(42L));
         kafkaTemplate.send(topicName, key, update);
 
         await().atMost(60, TimeUnit.SECONDS)
@@ -128,7 +128,7 @@ class KafkaDlqTest {
     @Test
     void validationFailure_isSentToDlqWithoutRetries() {
         String key = "null-url-test";
-        LinkUpdate invalidUpdate = new LinkUpdate(1L, null, "desc", List.of(42L));
+        LinkUpdate invalidUpdate = new LinkUpdate(null, "desc", List.of(42L));
 
         kafkaTemplate.send(topicName, key, invalidUpdate);
 

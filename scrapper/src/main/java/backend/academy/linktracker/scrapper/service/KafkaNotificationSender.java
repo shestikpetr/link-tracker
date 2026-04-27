@@ -25,7 +25,7 @@ public class KafkaNotificationSender implements NotificationSender {
                 .addKeyValue("url", url)
                 .addKeyValue("chatIds", chatIds)
                 .log();
-        LinkUpdate update = new LinkUpdate(null, url, description, chatIds);
+        LinkUpdate update = new LinkUpdate(url, description, chatIds);
         kafkaTemplate.send(kafkaProperties.getTopicName(), url.toString(), update);
     }
 }

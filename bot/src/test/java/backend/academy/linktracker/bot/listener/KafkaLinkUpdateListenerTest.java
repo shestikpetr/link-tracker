@@ -67,7 +67,7 @@ class KafkaLinkUpdateListenerTest {
 
     @Test
     void listen_delegatesValidMessageToNotifier() {
-        LinkUpdate update = new LinkUpdate(1L, URI.create("https://github.com/foo/bar"), "new commit", List.of(42L));
+        LinkUpdate update = new LinkUpdate(URI.create("https://github.com/foo/bar"), "new commit", List.of(42L));
 
         kafkaTemplate.send(topicName, update.url().toString(), update);
 
