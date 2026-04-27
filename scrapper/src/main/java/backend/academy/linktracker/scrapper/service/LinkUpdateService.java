@@ -5,8 +5,8 @@ import backend.academy.linktracker.scrapper.model.LinkUpdateInfo;
 import backend.academy.linktracker.scrapper.repository.LinkRepository;
 import java.net.URI;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -20,10 +20,14 @@ public class LinkUpdateService {
     private final NotificationSender notificationSender;
 
     public void processLink(URI url, List<ChatLink> chatLinks) {
+        if (chatLinks.isEmpty()) {
+            throw new IllegalArgumentException("chatLinks не должен быть пустым");
+        }
+
         Instant oldestLastChecked = chatLinks.stream()
                 .map(cl -> cl.link().lastCheckedAt())
                 .min(Instant::compareTo)
-                .orElse(Instant.now());
+                .orElseThrow();
 
         List<LinkUpdateInfo> updates = linkChecker.checkUpdates(url, oldestLastChecked);
         if (updates.isEmpty()) {
@@ -33,22 +37,20 @@ public class LinkUpdateService {
         Instant latestUpdate = updates.stream()
                 .map(LinkUpdateInfo::timestamp)
                 .max(Instant::compareTo)
-                .orElse(Instant.now());
+                .orElseThrow();
 
-        List<Long> chatIds = new ArrayList<>();
-        for (ChatLink chatLink : chatLinks) {
-            if (latestUpdate.isAfter(chatLink.link().lastCheckedAt())) {
-                chatIds.add(chatLink.chatId());
-                linkRepository.updateLastChecked(chatLink.link().id(), latestUpdate);
-            }
+        List<Long> chatIds = chatLinks.stream()
+                .filter(cl -> latestUpdate.isAfter(cl.link().lastCheckedAt()))
+                .map(ChatLink::chatId)
+                .toList();
+
+        if (chatIds.isEmpty()) {
+            return;
         }
 
-        if (!chatIds.isEmpty()) {
-            String description = updates.stream()
-                    .map(LinkUpdateInfo::description)
-                    .reduce((a, b) -> a + "\n\n" + b)
-                    .orElse("");
-            notificationSender.send(url, description, chatIds);
-        }
+        linkRepository.updateLastChecked(chatLinks.getFirst().link().id(), latestUpdate);
+
+        String description = updates.stream().map(LinkUpdateInfo::description).collect(Collectors.joining("\n\n"));
+        notificationSender.send(url, description, chatIds);
     }
 }

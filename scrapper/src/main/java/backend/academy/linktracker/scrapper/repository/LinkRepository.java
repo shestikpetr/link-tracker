@@ -12,6 +12,8 @@ import java.util.Optional;
 public interface LinkRepository {
     Optional<TrackedLink> addLink(Long chatId, URI url, List<String> tags, List<String> filters);
 
+    Optional<TrackedLink> updateLink(Long chatId, URI url, List<String> tags, List<String> filters);
+
     Optional<TrackedLink> removeLink(Long chatId, URI url);
 
     Collection<TrackedLink> findByChat(Long chatId);

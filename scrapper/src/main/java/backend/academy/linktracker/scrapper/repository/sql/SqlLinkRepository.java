@@ -4,6 +4,7 @@ import backend.academy.linktracker.scrapper.model.ChatLink;
 import backend.academy.linktracker.scrapper.model.TrackedLink;
 import backend.academy.linktracker.scrapper.repository.LinkRepository;
 import java.net.URI;
+import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -36,40 +37,96 @@ public class SqlLinkRepository implements LinkRepository {
                     RETURNING id, last_checked_at
                     """)
                 .param("url", url.toString())
-                .query((rs, _) -> Map.entry(
-                        rs.getLong("id"), rs.getTimestamp("last_checked_at").toInstant()))
+                .query((rs, _) -> Map.entry(rs.getLong("id"), toInstantOrNull(rs.getTimestamp("last_checked_at"))))
                 .single();
 
         Long linkId = linkRow.getKey();
         Instant lastCheckedAt = linkRow.getValue();
 
+        Long chatLinkId;
         try {
-            jdbcClient
-                    .sql("INSERT INTO chat_links (chat_id, link_id, filters) VALUES (:chatId, :linkId, :filters)")
+            chatLinkId = jdbcClient
+                    .sql("""
+                        INSERT INTO chat_links (chat_id, link_id, filters) VALUES (:chatId, :linkId, :filters)
+                        RETURNING id
+                        """)
                     .param("chatId", chatId)
                     .param("linkId", linkId)
                     .param("filters", filters.toArray(String[]::new))
-                    .update();
+                    .query(Long.class)
+                    .single();
         } catch (DuplicateKeyException e) {
             return Optional.empty();
         }
 
         for (String tag : new LinkedHashSet<>(tags)) {
+            Long tagId =
+                    jdbcClient.sql("""
+                        INSERT INTO tags (name) VALUES (:name)
+                        ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name
+                        RETURNING id
+                        """).param("name", tag).query(Long.class).single();
+
             jdbcClient
-                    .sql("INSERT INTO tags (name) VALUES (:name) ON CONFLICT DO NOTHING")
-                    .param("name", tag)
+                    .sql("INSERT INTO link_tags (chat_link_id, tag_id) VALUES (:chatLinkId, :tagId)")
+                    .param("chatLinkId", chatLinkId)
+                    .param("tagId", tagId)
                     .update();
+        }
 
-            Long tagId = jdbcClient
-                    .sql("SELECT id FROM tags WHERE name = :name")
-                    .param("name", tag)
-                    .query(Long.class)
-                    .single();
+        return Optional.of(new TrackedLink(linkId, url, tags, filters, lastCheckedAt));
+    }
+
+    @Override
+    public Optional<TrackedLink> updateLink(Long chatId, URI url, List<String> tags, List<String> filters) {
+        var linkRow = jdbcClient
+                .sql("SELECT id, last_checked_at FROM links WHERE url = :url")
+                .param("url", url.toString())
+                .query((rs, _) -> Map.entry(rs.getLong("id"), toInstantOrNull(rs.getTimestamp("last_checked_at"))))
+                .optional();
+
+        if (linkRow.isEmpty()) {
+            return Optional.empty();
+        }
+
+        Long linkId = linkRow.orElseThrow().getKey();
+        Instant lastCheckedAt = linkRow.orElseThrow().getValue();
+
+        Optional<Long> chatLinkIdOpt = jdbcClient
+                .sql("SELECT id FROM chat_links WHERE chat_id = :chatId AND link_id = :linkId")
+                .param("chatId", chatId)
+                .param("linkId", linkId)
+                .query(Long.class)
+                .optional();
+
+        if (chatLinkIdOpt.isEmpty()) {
+            return Optional.empty();
+        }
+
+        Long chatLinkId = chatLinkIdOpt.orElseThrow();
+
+        jdbcClient
+                .sql("UPDATE chat_links SET filters = :filters WHERE id = :chatLinkId")
+                .param("filters", filters.toArray(String[]::new))
+                .param("chatLinkId", chatLinkId)
+                .update();
+
+        jdbcClient
+                .sql("DELETE FROM link_tags WHERE chat_link_id = :chatLinkId")
+                .param("chatLinkId", chatLinkId)
+                .update();
+
+        for (String tag : new LinkedHashSet<>(tags)) {
+            Long tagId =
+                    jdbcClient.sql("""
+                        INSERT INTO tags (name) VALUES (:name)
+                        ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name
+                        RETURNING id
+                        """).param("name", tag).query(Long.class).single();
 
             jdbcClient
-                    .sql("INSERT INTO link_tags (chat_id, link_id, tag_id) VALUES (:chatId, :linkId, :tagId)")
-                    .param("chatId", chatId)
-                    .param("linkId", linkId)
+                    .sql("INSERT INTO link_tags (chat_link_id, tag_id) VALUES (:chatLinkId, :tagId)")
+                    .param("chatLinkId", chatLinkId)
                     .param("tagId", tagId)
                     .update();
         }
@@ -82,8 +139,7 @@ public class SqlLinkRepository implements LinkRepository {
         var linkRow = jdbcClient
                 .sql("SELECT id, last_checked_at FROM links WHERE url = :url")
                 .param("url", url.toString())
-                .query((rs, _) -> Map.entry(
-                        rs.getLong("id"), rs.getTimestamp("last_checked_at").toInstant()))
+                .query((rs, _) -> Map.entry(rs.getLong("id"), toInstantOrNull(rs.getTimestamp("last_checked_at"))))
                 .optional();
 
         if (linkRow.isEmpty()) {
@@ -93,37 +149,37 @@ public class SqlLinkRepository implements LinkRepository {
         Long linkId = linkRow.orElseThrow().getKey();
         Instant lastCheckedAt = linkRow.orElseThrow().getValue();
 
-        List<String> tags = jdbcClient
+        var chatLinkRow = jdbcClient
                 .sql("""
-                    SELECT t.name FROM tags t
-                    JOIN link_tags lt ON t.id = lt.tag_id
-                    WHERE lt.chat_id = :chatId AND lt.link_id = :linkId
-                    """)
-                .param("chatId", chatId)
-                .param("linkId", linkId)
-                .query(String.class)
-                .list();
-
-        var filtersResult = jdbcClient
-                .sql("""
-                    SELECT filters FROM chat_links
+                    SELECT id, filters FROM chat_links
                     WHERE chat_id = :chatId AND link_id = :linkId
                     """)
                 .param("chatId", chatId)
                 .param("linkId", linkId)
-                .query((rs, _) -> (String[]) rs.getArray("filters").getArray())
+                .query((rs, _) -> Map.entry(
+                        rs.getLong("id"), (String[]) rs.getArray("filters").getArray()))
                 .optional();
 
-        if (filtersResult.isEmpty()) {
+        if (chatLinkRow.isEmpty()) {
             return Optional.empty();
         }
 
-        List<String> linkFilters = List.of(filtersResult.orElseThrow());
+        Long chatLinkId = chatLinkRow.orElseThrow().getKey();
+        List<String> linkFilters = List.of(chatLinkRow.orElseThrow().getValue());
+
+        List<String> tags = jdbcClient
+                .sql("""
+                    SELECT t.name FROM tags t
+                    JOIN link_tags lt ON t.id = lt.tag_id
+                    WHERE lt.chat_link_id = :chatLinkId
+                    """)
+                .param("chatLinkId", chatLinkId)
+                .query(String.class)
+                .list();
 
         jdbcClient
-                .sql("DELETE FROM chat_links WHERE chat_id = :chatId AND link_id = :linkId")
-                .param("chatId", chatId)
-                .param("linkId", linkId)
+                .sql("DELETE FROM chat_links WHERE id = :chatLinkId")
+                .param("chatLinkId", chatLinkId)
                 .update();
 
         jdbcClient.sql("""
@@ -143,7 +199,7 @@ public class SqlLinkRepository implements LinkRepository {
                     SELECT cl.chat_id, l.id, l.url, l.last_checked_at, cl.filters, t.name AS tag_name
                     FROM links l
                     JOIN chat_links cl ON l.id = cl.link_id
-                    LEFT JOIN link_tags lt ON lt.chat_id = cl.chat_id AND lt.link_id = cl.link_id
+                    LEFT JOIN link_tags lt ON lt.chat_link_id = cl.id
                     LEFT JOIN tags t ON t.id = lt.tag_id
                     WHERE cl.chat_id = :chatId
                     """).param("chatId", chatId).query(linkRowMapper).list();
@@ -159,9 +215,9 @@ public class SqlLinkRepository implements LinkRepository {
                     SELECT DISTINCT l.id, l.url, l.last_checked_at, cl.filters, t2.name AS tag_name
                     FROM links l
                     JOIN chat_links cl ON l.id = cl.link_id
-                    JOIN link_tags lt2 ON lt2.chat_id = cl.chat_id AND lt2.link_id = cl.link_id
+                    JOIN link_tags lt2 ON lt2.chat_link_id = cl.id
                     JOIN tags t_filter ON t_filter.id = lt2.tag_id AND t_filter.name IN (:tags)
-                    LEFT JOIN link_tags lt ON lt.chat_id = cl.chat_id AND lt.link_id = cl.link_id
+                    LEFT JOIN link_tags lt ON lt.chat_link_id = cl.id
                     LEFT JOIN tags t2 ON t2.id = lt.tag_id
                     WHERE cl.chat_id = :chatId
                     """)
@@ -180,7 +236,7 @@ public class SqlLinkRepository implements LinkRepository {
             SELECT cl.chat_id, l.id, l.url, l.last_checked_at, cl.filters, t.name AS tag_name
             FROM links l
             JOIN chat_links cl ON l.id = cl.link_id
-            LEFT JOIN link_tags lt ON lt.chat_id = cl.chat_id AND lt.link_id = cl.link_id
+            LEFT JOIN link_tags lt ON lt.chat_link_id = cl.id
             LEFT JOIN tags t ON t.id = lt.tag_id
             """).query(linkRowMapper).list();
         return linkRowMapper.groupRowsByChatLink(rows);
@@ -207,6 +263,10 @@ public class SqlLinkRepository implements LinkRepository {
                 .update();
     }
 
+    private static Instant toInstantOrNull(Timestamp timestamp) {
+        return timestamp == null ? null : timestamp.toInstant();
+    }
+
     @Override
     @Transactional(readOnly = true)
     public Map<URI, List<ChatLink>> findStaleLinksGroupedByUrl(int limit) {
@@ -215,7 +275,7 @@ public class SqlLinkRepository implements LinkRepository {
                     SELECT cl.chat_id, l.id, l.url, l.last_checked_at, cl.filters, t.name AS tag_name
                     FROM links l
                     JOIN chat_links cl ON l.id = cl.link_id
-                    LEFT JOIN link_tags lt ON lt.chat_id = cl.chat_id AND lt.link_id = cl.link_id
+                    LEFT JOIN link_tags lt ON lt.chat_link_id = cl.id
                     LEFT JOIN tags t ON t.id = lt.tag_id
                     WHERE l.id IN (SELECT id FROM links ORDER BY last_checked_at ASC LIMIT :limit)
                     """).param("limit", limit).query(linkRowMapper).list();

@@ -15,6 +15,6 @@ public interface JpaLinkRepository extends JpaRepository<LinkEntity, Long> {
     List<LinkEntity> findStaleLinks(@Param("limit") int limit);
 
     @Modifying
-    @Query("DELETE FROM LinkEntity l WHERE l.id NOT IN (SELECT cl.id.linkId FROM ChatLinkEntity cl)")
+    @Query("DELETE FROM LinkEntity l WHERE l.id NOT IN (SELECT cl.link.id FROM ChatLinkEntity cl)")
     void deleteOrphan();
 }

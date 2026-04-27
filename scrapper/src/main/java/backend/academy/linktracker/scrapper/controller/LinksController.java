@@ -3,6 +3,7 @@ package backend.academy.linktracker.scrapper.controller;
 import backend.academy.linktracker.scrapper.dto.AddLinkRequest;
 import backend.academy.linktracker.scrapper.dto.LinkResponse;
 import backend.academy.linktracker.scrapper.dto.RemoveLinkRequest;
+import backend.academy.linktracker.scrapper.dto.UpdateLinkRequest;
 import backend.academy.linktracker.scrapper.service.LinkService;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -10,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -31,6 +33,12 @@ public class LinksController {
     @PostMapping
     public LinkResponse addLink(@RequestHeader("Tg-Chat-Id") Long chatId, @RequestBody @Valid AddLinkRequest request) {
         return linkService.addLink(chatId, request.link(), request.tags(), request.filters());
+    }
+
+    @PutMapping
+    public LinkResponse updateLink(
+            @RequestHeader("Tg-Chat-Id") Long chatId, @RequestBody @Valid UpdateLinkRequest request) {
+        return linkService.updateLink(chatId, request.link(), request.tags(), request.filters());
     }
 
     @DeleteMapping

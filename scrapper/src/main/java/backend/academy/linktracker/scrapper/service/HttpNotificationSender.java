@@ -23,6 +23,6 @@ public class HttpNotificationSender implements NotificationSender {
                 .addKeyValue("url", url)
                 .addKeyValue("chatIds", chatIds)
                 .log();
-        botClient.sendUpdate(new LinkUpdate(null, url, description, chatIds));
+        botClient.sendUpdate(new LinkUpdate(url, description, chatIds));
     }
 }
