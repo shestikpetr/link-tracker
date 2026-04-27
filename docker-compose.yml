@@ -89,8 +89,57 @@ services:
       - kafka-2
       - kafka-3
 
+  valkey-node-0:
+    image: bitnamilegacy/valkey-cluster:latest
+    container_name: valkey-node-0
+    ports:
+      - "6379:6379"
+    volumes:
+      - valkey_0_data:/bitnami/valkey/data
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+      - VALKEY_NODES=valkey-node-0 valkey-node-1 valkey-node-2
+
+  valkey-node-1:
+    image: bitnamilegacy/valkey-cluster:latest
+    container_name: valkey-node-1
+    ports:
+      - "6380:6379"
+    volumes:
+      - valkey_1_data:/bitnami/valkey/data
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+      - VALKEY_NODES=valkey-node-0 valkey-node-1 valkey-node-2
+
+  valkey-node-2:
+    image: bitnamilegacy/valkey-cluster:latest
+    container_name: valkey-node-2
+    ports:
+      - "6381:6379"
+    volumes:
+      - valkey_2_data:/bitnami/valkey/data
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+      - VALKEY_NODES=valkey-node-0 valkey-node-1 valkey-node-2
+
+  valkey-cluster-init:
+    image: bitnamilegacy/valkey-cluster:latest
+    container_name: valkey-cluster-init
+    depends_on:
+      - valkey-node-0
+      - valkey-node-1
+      - valkey-node-2
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+      - VALKEY_CLUSTER_REPLICAS=0
+      - VALKEY_CLUSTER_CREATOR=yes
+      - VALKEY_NODES=valkey-node-0 valkey-node-1 valkey-node-2
+
 volumes:
   db_data:
   kafka_1_data:
   kafka_2_data:
   kafka_3_data:
+  valkey_0_data:
+  valkey_1_data:
+  valkey_2_data:
