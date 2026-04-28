@@ -37,14 +37,17 @@ class LinkServiceTest {
     @Mock
     LinkChecker linkChecker;
 
+    @Mock
+    LinkCacheService linkCache;
+
     @InjectMocks
     LinkService linkService;
 
     @Test
     void getLinks_returns_all_links_when_no_tag() {
-        var link = new TrackedLink(1L, GITHUB_URL, List.of("work"), List.of(), Instant.now());
+        var link = new LinkResponse(1L, GITHUB_URL, List.of("work"), List.of());
         when(chatRepository.chatExists(1L)).thenReturn(true);
-        when(linkRepository.findByChat(1L)).thenReturn(List.of(link));
+        when(linkCache.getByChat(1L)).thenReturn(List.of(link));
 
         List<LinkResponse> result = linkService.getLinks(1L, null);
 
@@ -54,9 +57,11 @@ class LinkServiceTest {
 
     @Test
     void getLinks_filters_by_tag() {
-        var linkWork = new TrackedLink(1L, GITHUB_URL, List.of("work"), List.of(), Instant.now());
+        URI otherUrl = URI.create("https://github.com/foo/baz");
+        var work = new LinkResponse(1L, GITHUB_URL, List.of("work"), List.of());
+        var personal = new LinkResponse(2L, otherUrl, List.of("personal"), List.of());
         when(chatRepository.chatExists(1L)).thenReturn(true);
-        when(linkRepository.findByChatAndTags(1L, List.of("work"))).thenReturn(List.of(linkWork));
+        when(linkCache.getByChat(1L)).thenReturn(List.of(work, personal));
 
         List<LinkResponse> result = linkService.getLinks(1L, List.of("work"));
 
@@ -84,6 +89,7 @@ class LinkServiceTest {
 
         assertThat(result.url()).isEqualTo(GITHUB_URL);
         verify(linkRepository).addLink(1L, GITHUB_URL, List.of(), List.of());
+        verify(linkCache).evict(1L);
     }
 
     @Test
@@ -109,6 +115,7 @@ class LinkServiceTest {
         assertThat(result.tags()).containsExactly("new-tag");
         assertThat(result.filters()).containsExactly("new-filter");
         verify(linkRepository).updateLink(1L, GITHUB_URL, List.of("new-tag"), List.of("new-filter"));
+        verify(linkCache).evict(1L);
     }
 
     @Test
@@ -130,6 +137,7 @@ class LinkServiceTest {
 
         assertThat(result.url()).isEqualTo(GITHUB_URL);
         verify(linkRepository).removeLink(1L, GITHUB_URL);
+        verify(linkCache).evict(1L);
     }
 
     @Test

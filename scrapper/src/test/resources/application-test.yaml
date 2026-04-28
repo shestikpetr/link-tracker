@@ -26,3 +26,10 @@ spring:
     open-in-view: false
   autoconfigure:
     exclude: org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration
+  data:
+    redis:
+      cluster:
+        nodes:
+  cache:
+    redis:
+      time-to-live: PT2S
