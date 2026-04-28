@@ -135,6 +135,45 @@ services:
       - VALKEY_CLUSTER_CREATOR=yes
       - VALKEY_NODES=valkey-node-0 valkey-node-1 valkey-node-2
 
+  scrapper:
+    build:
+      context: .
+      dockerfile: scrapper/Dockerfile
+    container_name: scrapper
+    ports:
+      - "8081:8081"
+    env_file:
+      - scrapper/.env
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/scrapper
+      SPRING_DATA_REDIS_CLUSTER_NODES: valkey-node-0:6379,valkey-node-1:6379,valkey-node-2:6379
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka-1:29092,kafka-2:29092,kafka-3:29092
+      APP_BOT_BASE_URL: http://bot:8080
+    depends_on:
+      - db
+      - kafka-1
+      - kafka-2
+      - kafka-3
+      - valkey-cluster-init
+
+  bot:
+    build:
+      context: .
+      dockerfile: bot/Dockerfile
+    container_name: bot
+    ports:
+      - "8080:8080"
+    env_file:
+      - bot/.env
+    environment:
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka-1:29092,kafka-2:29092,kafka-3:29092
+      APP_SCRAPPER_BASE_URL: http://scrapper:8081
+    depends_on:
+      - kafka-1
+      - kafka-2
+      - kafka-3
+      - scrapper
+
 volumes:
   db_data:
   kafka_1_data:

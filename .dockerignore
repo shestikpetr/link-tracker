@@ -1,0 +1,13 @@
+.git
+.idea
+**/target
+*.iml
+**/.env*
+docker-compose.yml
+**/Dockerfile
+HELP.md
+README.md
+.gitignore
+.gitattributes
+.gitlab-ci.yml
+.editorconfig
