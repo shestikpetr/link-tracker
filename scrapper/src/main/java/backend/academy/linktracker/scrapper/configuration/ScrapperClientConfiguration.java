@@ -20,32 +20,36 @@ import org.springframework.web.service.invoker.HttpServiceProxyFactory;
 @Configuration
 public class ScrapperClientConfiguration {
     @Bean
-    public GithubClient githubClient(GithubProperties properties) {
+    public GithubClient githubClient(GithubProperties properties, RetryHttpInterceptor retryHttpInterceptor) {
         var restClient = RestClient.builder()
                 .baseUrl("https://api.github.com")
                 .defaultHeader("Authorization", "Bearer " + properties.getToken())
                 .requestFactory(requestFactory(properties.getConnectTimeout(), properties.getReadTimeout()))
+                .requestInterceptor(retryHttpInterceptor)
                 .build();
 
         return createClient(restClient, GithubClient.class);
     }
 
     @Bean
-    public StackoverflowClient stackoverflowClient(StackoverflowProperties properties) {
+    public StackoverflowClient stackoverflowClient(
+            StackoverflowProperties properties, RetryHttpInterceptor retryHttpInterceptor) {
         var restClient = RestClient.builder()
                 .baseUrl("https://api.stackexchange.com")
                 .requestFactory(requestFactory(properties.getConnectTimeout(), properties.getReadTimeout()))
                 .requestInterceptor(new StackoverflowAuthInterceptor(properties))
+                .requestInterceptor(retryHttpInterceptor)
                 .build();
 
         return createClient(restClient, StackoverflowClient.class);
     }
 
     @Bean
-    public BotClient botClient(BotProperties properties) {
+    public BotClient botClient(BotProperties properties, RetryHttpInterceptor retryHttpInterceptor) {
         var restClient = RestClient.builder()
                 .baseUrl(properties.getBaseUrl())
                 .requestFactory(requestFactory(properties.getConnectTimeout(), properties.getReadTimeout()))
+                .requestInterceptor(retryHttpInterceptor)
                 .build();
 
         return createClient(restClient, BotClient.class);

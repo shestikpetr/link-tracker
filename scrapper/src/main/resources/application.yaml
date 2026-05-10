@@ -63,3 +63,8 @@ app:
     transport: KAFKA # KAFKA, HTTP
   kafka:
     topic-name: link-updates
+  resilience:
+    retry:
+      max-attempts: 3
+      wait-duration: 500ms
+      retryable-statuses: [500, 502, 503, 504]
