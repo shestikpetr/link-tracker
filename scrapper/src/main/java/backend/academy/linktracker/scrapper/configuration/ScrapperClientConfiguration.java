@@ -20,11 +20,16 @@ import org.springframework.web.service.invoker.HttpServiceProxyFactory;
 @Configuration
 public class ScrapperClientConfiguration {
     @Bean
-    public GithubClient githubClient(GithubProperties properties, RetryHttpInterceptor retryHttpInterceptor) {
+    public GithubClient githubClient(
+            GithubProperties properties,
+            CircuitBreakerHttpInterceptor circuitBreakerHttpInterceptor,
+            RetryHttpInterceptor retryHttpInterceptor
+    ) {
         var restClient = RestClient.builder()
                 .baseUrl("https://api.github.com")
                 .defaultHeader("Authorization", "Bearer " + properties.getToken())
                 .requestFactory(requestFactory(properties.getConnectTimeout(), properties.getReadTimeout()))
+                .requestInterceptor(circuitBreakerHttpInterceptor)
                 .requestInterceptor(retryHttpInterceptor)
                 .build();
 
@@ -33,11 +38,15 @@ public class ScrapperClientConfiguration {
 
     @Bean
     public StackoverflowClient stackoverflowClient(
-            StackoverflowProperties properties, RetryHttpInterceptor retryHttpInterceptor) {
+            StackoverflowProperties properties,
+            CircuitBreakerHttpInterceptor circuitBreakerHttpInterceptor,
+            RetryHttpInterceptor retryHttpInterceptor
+    ) {
         var restClient = RestClient.builder()
                 .baseUrl("https://api.stackexchange.com")
                 .requestFactory(requestFactory(properties.getConnectTimeout(), properties.getReadTimeout()))
                 .requestInterceptor(new StackoverflowAuthInterceptor(properties))
+                .requestInterceptor(circuitBreakerHttpInterceptor)
                 .requestInterceptor(retryHttpInterceptor)
                 .build();
 
@@ -45,10 +54,15 @@ public class ScrapperClientConfiguration {
     }
 
     @Bean
-    public BotClient botClient(BotProperties properties, RetryHttpInterceptor retryHttpInterceptor) {
+    public BotClient botClient(
+            BotProperties properties,
+            CircuitBreakerHttpInterceptor circuitBreakerHttpInterceptor,
+            RetryHttpInterceptor retryHttpInterceptor
+    ) {
         var restClient = RestClient.builder()
                 .baseUrl(properties.getBaseUrl())
                 .requestFactory(requestFactory(properties.getConnectTimeout(), properties.getReadTimeout()))
+                .requestInterceptor(circuitBreakerHttpInterceptor)
                 .requestInterceptor(retryHttpInterceptor)
                 .build();
 
