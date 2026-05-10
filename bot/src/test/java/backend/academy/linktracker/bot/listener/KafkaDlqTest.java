@@ -49,7 +49,7 @@ import org.wiremock.spring.EnableWireMock;
 
 @SpringBootTest(
         properties = {
-            "app.notification.transport=KAFKA",
+            "app.kafka.enabled=true",
             "app.kafka.topic-name=link-updates-dlq-src-test",
             "app.kafka.dlq-topic-name=link-updates-dlq-sink-test",
             "app.kafka.max-retries=2",

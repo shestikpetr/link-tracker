@@ -26,7 +26,7 @@ import org.wiremock.spring.EnableWireMock;
 
 @SpringBootTest(
         properties = {
-            "app.notification.transport=KAFKA",
+            "app.kafka.enabled=true",
             "app.kafka.topic-name=link-updates-test",
             "app.kafka.dlq-topic-name=link-updates-dlq-test",
             "spring.autoconfigure.exclude[0]=org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration",

@@ -6,9 +6,8 @@ app:
     debug: true
   scrapper:
     base-url: ${wiremock.server.baseUrl}
-  notification:
-    transport: HTTP
   kafka:
+    enabled: false
     topic-name: link-updates-test
     dlq-topic-name: link-updates-dlq-test
     consumer-group-id: bot-link-updates-test

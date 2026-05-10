@@ -59,9 +59,8 @@ app:
     thread-count: 4
   database:
     access-type: ORM # INMEMORY, SQL, ORM
-  notification:
-    transport: KAFKA # KAFKA, HTTP
   kafka:
+    enabled: true
     topic-name: link-updates
   resilience:
     retry:

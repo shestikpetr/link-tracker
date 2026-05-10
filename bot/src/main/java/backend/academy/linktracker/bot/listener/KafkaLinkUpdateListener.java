@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
-@ConditionalOnProperty(name = "app.notification.transport", havingValue = "KAFKA", matchIfMissing = true)
+@ConditionalOnProperty(name = "app.kafka.enabled", matchIfMissing = true)
 @RequiredArgsConstructor
 public class KafkaLinkUpdateListener {
     private final LinkUpdateNotifier linkUpdateNotifier;

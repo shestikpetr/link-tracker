@@ -15,7 +15,7 @@ import org.springframework.messaging.converter.MessageConversionException;
 import org.springframework.util.backoff.FixedBackOff;
 
 @Configuration
-@ConditionalOnProperty(name = "app.notification.transport", havingValue = "KAFKA", matchIfMissing = true)
+@ConditionalOnProperty(name = "app.kafka.enabled", matchIfMissing = true)
 public class KafkaConsumerConfiguration {
 
     @Bean

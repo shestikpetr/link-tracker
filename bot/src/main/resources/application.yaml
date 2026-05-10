@@ -30,9 +30,8 @@ app:
     debug: false
   scrapper:
     base-url: http://localhost:8081
-  notification:
-    transport: KAFKA # KAFKA, HTTP
   kafka:
+    enabled: true
     topic-name: link-updates
     dlq-topic-name: link-updates-dlq
     consumer-group-id: bot-link-updates

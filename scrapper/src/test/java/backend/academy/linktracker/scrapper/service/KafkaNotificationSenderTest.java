@@ -32,7 +32,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 @SpringBootTest(
         properties = {
-            "app.notification.transport=KAFKA",
+            "app.kafka.enabled=true",
             "app.kafka.topic-name=link-updates-test",
             "spring.autoconfigure.exclude=",
             "spring.kafka.producer.acks=1",
@@ -57,7 +57,7 @@ class KafkaNotificationSenderTest {
     }
 
     @Autowired
-    NotificationSender notificationSender;
+    KafkaNotificationSender notificationSender;
 
     @Autowired
     KafkaConnectionDetails kafkaConnectionDetails;

@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.TopicBuilder;
 
 @Configuration
-@ConditionalOnProperty(name = "app.notification.transport", havingValue = "KAFKA", matchIfMissing = true)
+@ConditionalOnProperty(name = "app.kafka.enabled", matchIfMissing = true)
 public class KafkaProducerConfiguration {
 
     @Bean

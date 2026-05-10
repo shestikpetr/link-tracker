@@ -12,9 +12,8 @@ app:
     thread-count: 2
   database:
     access-type: SQL # INMEMORY, SQL, ORM
-  notification:
-    transport: HTTP
   kafka:
+    enabled: false
     topic-name: link-updates-test
 
 spring:

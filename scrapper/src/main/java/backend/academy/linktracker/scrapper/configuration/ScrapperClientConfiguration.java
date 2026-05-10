@@ -23,8 +23,7 @@ public class ScrapperClientConfiguration {
     public GithubClient githubClient(
             GithubProperties properties,
             CircuitBreakerHttpInterceptor circuitBreakerHttpInterceptor,
-            RetryHttpInterceptor retryHttpInterceptor
-    ) {
+            RetryHttpInterceptor retryHttpInterceptor) {
         var restClient = RestClient.builder()
                 .baseUrl("https://api.github.com")
                 .defaultHeader("Authorization", "Bearer " + properties.getToken())
@@ -40,8 +39,7 @@ public class ScrapperClientConfiguration {
     public StackoverflowClient stackoverflowClient(
             StackoverflowProperties properties,
             CircuitBreakerHttpInterceptor circuitBreakerHttpInterceptor,
-            RetryHttpInterceptor retryHttpInterceptor
-    ) {
+            RetryHttpInterceptor retryHttpInterceptor) {
         var restClient = RestClient.builder()
                 .baseUrl("https://api.stackexchange.com")
                 .requestFactory(requestFactory(properties.getConnectTimeout(), properties.getReadTimeout()))
@@ -57,8 +55,7 @@ public class ScrapperClientConfiguration {
     public BotClient botClient(
             BotProperties properties,
             CircuitBreakerHttpInterceptor circuitBreakerHttpInterceptor,
-            RetryHttpInterceptor retryHttpInterceptor
-    ) {
+            RetryHttpInterceptor retryHttpInterceptor) {
         var restClient = RestClient.builder()
                 .baseUrl(properties.getBaseUrl())
                 .requestFactory(requestFactory(properties.getConnectTimeout(), properties.getReadTimeout()))
