@@ -5,7 +5,6 @@ import backend.academy.linktracker.scrapper.exceptions.ChatNotFoundException;
 import backend.academy.linktracker.scrapper.exceptions.LinkAlreadyExistsException;
 import backend.academy.linktracker.scrapper.exceptions.LinkNotFoundException;
 import backend.academy.linktracker.scrapper.exceptions.UnsupportedLinkException;
-import backend.academy.linktracker.scrapper.model.TrackedLink;
 import backend.academy.linktracker.scrapper.repository.ChatRepository;
 import backend.academy.linktracker.scrapper.repository.LinkRepository;
 import java.net.URI;
@@ -42,7 +41,7 @@ public class LinkService {
 
         LinkResponse response = linkRepository
                 .addLink(chatId, url, tags, filters)
-                .map(this::toResponse)
+                .map(LinkResponse::from)
                 .orElseThrow(() -> new LinkAlreadyExistsException(url));
         linkCache.evict(chatId);
         return response;
@@ -53,7 +52,7 @@ public class LinkService {
 
         LinkResponse response = linkRepository
                 .updateLink(chatId, url, tags, filters)
-                .map(this::toResponse)
+                .map(LinkResponse::from)
                 .orElseThrow(() -> new LinkNotFoundException(url));
         linkCache.evict(chatId);
         return response;
@@ -64,7 +63,7 @@ public class LinkService {
 
         LinkResponse response = linkRepository
                 .removeLink(chatId, url)
-                .map(this::toResponse)
+                .map(LinkResponse::from)
                 .orElseThrow(() -> new LinkNotFoundException(url));
         linkCache.evict(chatId);
         return response;
@@ -74,9 +73,5 @@ public class LinkService {
         if (!chatRepository.chatExists(chatId)) {
             throw new ChatNotFoundException(chatId);
         }
-    }
-
-    private LinkResponse toResponse(TrackedLink link) {
-        return new LinkResponse(link.id(), link.url(), link.tags(), link.filters());
     }
 }

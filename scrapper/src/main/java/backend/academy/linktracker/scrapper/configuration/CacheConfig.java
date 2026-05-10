@@ -17,12 +17,12 @@ import tools.jackson.databind.json.JsonMapper;
 public class CacheConfig {
 
     @Bean
-    public RedisCacheConfiguration redisCacheConfiguration(CacheProperties properties) {
+    public RedisCacheConfiguration redisCacheConfiguration(CacheProperties properties, JsonMapper jsonMapper) {
         CacheProperties.Redis redis = properties.getRedis();
 
-        JavaType linksType =
-                JsonMapper.builder().build().getTypeFactory().constructCollectionType(List.class, LinkResponse.class);
-        JacksonJsonRedisSerializer<List<LinkResponse>> serializer = new JacksonJsonRedisSerializer<>(linksType);
+        JavaType linksType = jsonMapper.getTypeFactory().constructCollectionType(List.class, LinkResponse.class);
+        JacksonJsonRedisSerializer<List<LinkResponse>> serializer =
+                new JacksonJsonRedisSerializer<>(jsonMapper, linksType);
 
         RedisCacheConfiguration config = RedisCacheConfiguration.defaultCacheConfig()
                 .serializeValuesWith(SerializationPair.fromSerializer(serializer));

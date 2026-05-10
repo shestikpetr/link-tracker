@@ -1,7 +1,6 @@
 package backend.academy.linktracker.scrapper.service;
 
 import backend.academy.linktracker.scrapper.dto.LinkResponse;
-import backend.academy.linktracker.scrapper.model.TrackedLink;
 import backend.academy.linktracker.scrapper.repository.LinkRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -16,13 +15,11 @@ public class LinkCacheService {
 
     @Cacheable(cacheNames = "links", key = "#chatId")
     public List<LinkResponse> getByChat(Long chatId) {
-        return linkRepository.findByChat(chatId).stream().map(this::toResponse).toList();
+        return linkRepository.findByChat(chatId).stream()
+                .map(LinkResponse::from)
+                .toList();
     }
 
     @CacheEvict(cacheNames = "links", key = "#chatId")
     public void evict(Long chatId) {}
-
-    private LinkResponse toResponse(TrackedLink link) {
-        return new LinkResponse(link.id(), link.url(), link.tags(), link.filters());
-    }
 }
