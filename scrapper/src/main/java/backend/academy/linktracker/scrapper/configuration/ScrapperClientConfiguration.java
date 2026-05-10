@@ -51,7 +51,7 @@ public class ScrapperClientConfiguration {
         return createClient(restClient, BotClient.class);
     }
 
-    private static ClientHttpRequestFactory requestFactory(Duration connectTimeout, Duration readTimeout) {
+    public static ClientHttpRequestFactory requestFactory(Duration connectTimeout, Duration readTimeout) {
         var httpClient = HttpClient.newBuilder().connectTimeout(connectTimeout).build();
         var factory = new JdkClientHttpRequestFactory(httpClient);
         factory.setReadTimeout(readTimeout);
