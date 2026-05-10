@@ -74,3 +74,6 @@ app:
       failure-rate-threshold: 50
       wait-duration-in-open-state: 10s
       permitted-number-of-calls-in-half-open-state: 3
+  rate-limit:
+    capacity: 20
+    refill-period: 1m
