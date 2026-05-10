@@ -38,12 +38,12 @@ public class ResilienceConfiguration {
                 .onRetry(event -> log.atWarn()
                         .setMessage("Повторная попытка HTTP запроса")
                         .addKeyValue("attempt", event.getNumberOfRetryAttempts())
-                        .addKeyValue("error", event.getLastThrowable().getMessage())
+                        .addKeyValue("error", String.valueOf(event.getLastThrowable()))
                         .log())
                 .onError(event -> log.atError()
                         .setMessage("Все попытки HTTP запроса исчерпаны")
                         .addKeyValue("attempts", event.getNumberOfRetryAttempts())
-                        .addKeyValue("error", event.getLastThrowable().getMessage())
+                        .addKeyValue("error", String.valueOf(event.getLastThrowable()))
                         .log());
 
         return retry;

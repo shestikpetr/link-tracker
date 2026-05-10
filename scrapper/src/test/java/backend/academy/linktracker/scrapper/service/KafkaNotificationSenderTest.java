@@ -10,6 +10,7 @@ import java.net.URI;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.Consumer;
@@ -107,7 +108,7 @@ class KafkaNotificationSenderTest {
                                         ? records.iterator().next()
                                         : null;
                             },
-                            r -> r != null);
+                            Objects::nonNull);
         }
     }
 }

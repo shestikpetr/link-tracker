@@ -4,12 +4,14 @@ import backend.academy.linktracker.scrapper.exceptions.RetryableHttpStatusExcept
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import java.io.IOException;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.NullMarked;
 import org.springframework.http.HttpRequest;
 import org.springframework.http.client.ClientHttpRequestExecution;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.ClientHttpResponse;
 
 @Slf4j
+@NullMarked
 public class CircuitBreakerHttpInterceptor implements ClientHttpRequestInterceptor {
 
     private final CircuitBreaker circuitBreaker;

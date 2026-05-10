@@ -5,12 +5,14 @@ import io.github.resilience4j.retry.Retry;
 import java.io.IOException;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.NullMarked;
 import org.springframework.http.HttpRequest;
 import org.springframework.http.client.ClientHttpRequestExecution;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.ClientHttpResponse;
 
 @Slf4j
+@NullMarked
 public class RetryHttpInterceptor implements ClientHttpRequestInterceptor {
 
     private final Retry retry;
