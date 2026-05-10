@@ -22,9 +22,13 @@ public class ResilienceConfiguration {
 
     @Bean
     public Retry externalHttpRetry(RetryProperties properties) {
+        IntervalFunction intervalFunction = properties.isExponentialBackoff()
+                ? IntervalFunction.ofExponentialBackoff(properties.getWaitDuration(), properties.getBackoffMultiplier())
+                : IntervalFunction.of(properties.getWaitDuration());
+
         RetryConfig config = RetryConfig.custom()
                 .maxAttempts(properties.getMaxAttempts())
-                .intervalFunction(IntervalFunction.of(properties.getWaitDuration()))
+                .intervalFunction(intervalFunction)
                 .retryExceptions(RetryableHttpStatusException.class, IOException.class)
                 .build();
 

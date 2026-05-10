@@ -1,5 +1,6 @@
 package backend.academy.linktracker.scrapper.properties;
 
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -28,4 +29,9 @@ public class RetryProperties {
 
     @NotEmpty
     private Set<Integer> retryableStatuses = Set.of(500, 502, 503, 504);
+
+    private boolean exponentialBackoff = false;
+
+    @DecimalMin("1.0")
+    private double backoffMultiplier = 2.0;
 }

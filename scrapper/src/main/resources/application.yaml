@@ -67,6 +67,8 @@ app:
       max-attempts: 3
       wait-duration: 500ms
       retryable-statuses: [500, 502, 503, 504]
+      exponential-backoff: true
+      backoff-multiplier: 2.0
     circuit-breaker:
       sliding-window-type: COUNT_BASED
       sliding-window-size: 10
